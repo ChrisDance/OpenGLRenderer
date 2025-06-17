@@ -17,37 +17,6 @@
 #include "Model.hpp"
 #include "model_loader.hpp"
 
-void setupInstancedArray(Model &model, unsigned int buffer, std::vector<glm::mat4> modelMatrices)
-{
-    // configure instanced array
-    glGenBuffers(1, &buffer);
-    glBindBuffer(GL_ARRAY_BUFFER, buffer);
-    glBufferData(GL_ARRAY_BUFFER, modelMatrices.size() * sizeof(glm::mat4), &modelMatrices[0], GL_STATIC_DRAW);
-
-    // set transformation matrices as an instance vertex attribute
-    for (unsigned int i = 0; i < model.meshes.size(); i++)
-    {
-        unsigned int VAO = model.meshes[i].VAO;
-        glBindVertexArray(VAO);
-        // set attribute pointers for matrix (4 times vec4)
-        glEnableVertexAttribArray(3);
-        glVertexAttribPointer(3, 4, GL_FLOAT, GL_FALSE, sizeof(glm::mat4), (void *)0);
-        glEnableVertexAttribArray(4);
-        glVertexAttribPointer(4, 4, GL_FLOAT, GL_FALSE, sizeof(glm::mat4), (void *)(sizeof(glm::vec4)));
-        glEnableVertexAttribArray(5);
-        glVertexAttribPointer(5, 4, GL_FLOAT, GL_FALSE, sizeof(glm::mat4), (void *)(2 * sizeof(glm::vec4)));
-        glEnableVertexAttribArray(6);
-        glVertexAttribPointer(6, 4, GL_FLOAT, GL_FALSE, sizeof(glm::mat4), (void *)(3 * sizeof(glm::vec4)));
-
-        glVertexAttribDivisor(3, 1);
-        glVertexAttribDivisor(4, 1);
-        glVertexAttribDivisor(5, 1);
-        glVertexAttribDivisor(6, 1);
-
-        glBindVertexArray(0);
-    }
-}
-
 // Global variables
 const unsigned int SCR_WIDTH = 1200;
 const unsigned int SCR_HEIGHT = 800;
@@ -109,6 +78,21 @@ int main()
     // Load models (replace with your model path)
     // Model ourModel("ford/scene.gltf", true);
     Model_ ourModel = load_model("ford/scene.gltf");
+    ourModel.maxInstances = 2;
+    setupModel(&ourModel);
+    std::vector<glm::mat4> instances;
+
+    for (int i = 0; i < 2; i++)
+    {
+
+        glm::mat4 model = glm::mat4(1.0f);
+        model = glm::rotate(model, (float)M_PI, glm::vec3(0.0f, 0.0f, 1.0f));
+        model = glm::translate(model, glm::vec3(0.0f, 3.0f, i * 5.0f));
+        model = glm::scale(model, glm::vec3(0.01));
+
+        instances.push_back(model);
+    }
+    uploadInstanceData(&ourModel, instances);
 
     // Render loop
     while (!glfwWindowShouldClose(window))
@@ -131,11 +115,7 @@ int main()
         Shader::setMat4("view", ID, view);
 
         // World transformation
-        glm::mat4 model = glm::mat4(1.0f);
-        model = glm::rotate(model, (float)M_PI, glm::vec3(0.0f, 0.0f, 1.0f));
-        model = glm::translate(model, glm::vec3(0.0f, 3.0f, 1.0f));
-        model = glm::scale(model, glm::vec3(0.01));
-        Shader::setMat4("model", ID, model);
+        // Shader::setMat4("model", ID, model);
 
         // Lighting
         Shader::setVec3("lightPos", ID, glm::vec3(1.2f, 100.0f, 2.0f));
@@ -143,10 +123,13 @@ int main()
         Shader::setVec3("lightColor", ID, glm::vec3(1.0f, 1.0f, 1.0f));
         Shader::setVec3("objectColor", ID, glm::vec3(0.0f, 0.0f, 0.0f));
 
-        for (auto &mesh : ourModel.meshes)
-        {
-            Draw(&mesh, ID);
-        }
+        draw(ID, &ourModel, instances);
+
+        // unsigned int shader, Model_ *model, std::vector<glm::mat4> &instances)
+        // for (auto &mesh : ourModel.meshes)
+        // {
+        //     Draw(&mesh, ID);
+        // }
 
         glfwSwapBuffers(window);
         glfwPollEvents();

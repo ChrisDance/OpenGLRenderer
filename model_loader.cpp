@@ -95,7 +95,6 @@ static Mesh_ processMesh(aiMesh *mesh, const aiScene *scene, std::string &direct
     m.vertices = vertices;
     m.indices = indices;
     m.textures = textures;
-    setupMesh(&m);
     return m;
 }
 

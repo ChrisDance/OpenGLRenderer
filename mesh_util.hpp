@@ -18,4 +18,8 @@
 #include <memory>
 
 void Draw(Mesh_ *mesh, unsigned int Shader);
-void setupMesh(Mesh_ *mesh);
+
+void draw(unsigned int shader, Model_ *model, std::vector<glm::mat4> &instances);
+
+void uploadInstanceData(Model_ *model, std::vector<glm::mat4> instances);
+void setupModel(Model_ *model);

@@ -37,10 +37,14 @@ struct Mesh_
     std::vector<Vertex> vertices;
     std::vector<unsigned int> indices;
     std::vector<Texture> textures;
-    unsigned int VBO, EBO, VAO;
+    GLuint VBO, EBO, VAO;
 };
 
 struct Model_
 {
     std::vector<Mesh_> meshes;
+    GLuint IVBO;             /*instancing*/
+    glm::mat4 *mappedBuffer; /*Direct pointer to GPU memory*/
+    unsigned int maxInstances = 2;
+    unsigned int currentCount = 0;
 };
