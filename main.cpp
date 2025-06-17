@@ -144,8 +144,8 @@ int main()
     setupModel(&ourModel, 10);
     add_instance();
     std::vector<PointLight> lights;
-    lights.push_back(createPointLight(glm::vec3(0.0f, 10.0f, 0.0f), glm::vec3(1.0f), 4.0f));
-    lights.push_back(createPointLight(glm::vec3(10.0f, 10.0f, 0.0f), glm::vec3(1.0f), 5.0f));
+    lights.push_back(createPointLight(glm::vec3(5.0f, 0.0f, 0.0f), glm::vec3(1.0f), 2.0f));
+    // lights.push_back(createPointLight(glm::vec3(10.0f, 10.0f, 0.0f), glm::vec3(1.0f), 5.0f));
 
     Shader::use(ID);
     uploadLightData(lights, ID);

@@ -1,37 +1,136 @@
 
 #include "model_loader.hpp"
-static std::vector<Texture> loadMaterialTextures(aiMaterial *mat, aiTextureType type, std::string typeName, std::string &directory, std::vector<Texture> &textures_loaded)
-{
-    std::vector<Texture> textures;
-    for (unsigned int i = 0; i < mat->GetTextureCount(type); i++)
-    {
-        aiString str;
-        mat->GetTexture(type, i, &str);
 
-        bool skip = false;
-        for (unsigned int j = 0; j < textures_loaded.size(); j++)
-        {
-            if (std::strcmp(textures_loaded[j].path.data(), str.C_Str()) == 0)
-            {
-                textures.push_back(textures_loaded[j]);
-                skip = true;
-                break;
-            }
-        }
-        if (!skip)
-        {
-            Texture texture;
-            texture.id = TextureFromFile(str.C_Str(), directory);
-            texture.type = typeName;
-            texture.path = str.C_Str();
-            textures.push_back(texture);
-            textures_loaded.push_back(texture);
-        }
-    }
-    return textures;
+static Material createMaterialFromTextures(const std::vector<Texture> &textures)
+{
+    Material material = {0};
 }
 
-static Mesh processMesh(aiMesh *mesh, const aiScene *scene, std::string &directory, std::vector<Texture> &textures_loaded)
+// Helper function to load a single texture with duplicate checking
+static unsigned int loadTexture(const char *path, const std::string &directory,
+                                std::vector<Texture> &textures_loaded)
+{
+
+    // Check if already loaded (same logic as your current loadMaterialTextures)
+    for (const auto &texture : textures_loaded)
+    {
+        if (std::strcmp(texture.path.data(), path) == 0)
+        {
+            return texture.id; // Return existing texture ID
+        }
+    }
+
+    // Load new texture using your existing function
+    uint32_t textureID = TextureFromFile(path, directory);
+
+    // Add to loaded textures cache
+    Texture texture;
+    texture.id = textureID;
+    texture.path = path;
+    textures_loaded.push_back(texture);
+
+    return textureID;
+}
+
+static Material processMaterial(aiMaterial *aiMat, const std::string &directory,
+                                std::vector<Texture> &textures_loaded)
+{
+    Material material = {};
+
+    // Load textures
+    if (aiMat->GetTextureCount(aiTextureType_DIFFUSE) > 0)
+    {
+        aiString path;
+        aiMat->GetTexture(aiTextureType_DIFFUSE, 0, &path);
+        material.diffuse_texture = loadTexture(path.C_Str(), directory, textures_loaded);
+    }
+
+    if (aiMat->GetTextureCount(aiTextureType_SPECULAR) > 0)
+    {
+        aiString path;
+        aiMat->GetTexture(aiTextureType_SPECULAR, 0, &path);
+        material.specular_texture = loadTexture(path.C_Str(), directory, textures_loaded);
+    }
+
+    if (aiMat->GetTextureCount(aiTextureType_HEIGHT) > 0)
+    {
+        aiString path;
+        aiMat->GetTexture(aiTextureType_HEIGHT, 0, &path);
+        material.normal_texture = loadTexture(path.C_Str(), directory, textures_loaded);
+    }
+
+    // Extract material properties from Assimp
+    aiColor3D color;
+
+    // Diffuse color
+    if (aiMat->Get(AI_MATKEY_COLOR_DIFFUSE, color) == AI_SUCCESS)
+    {
+        material.diffuse_color = {color.r, color.g, color.b};
+    }
+    else
+    {
+        material.diffuse_color = {1.0f, 1.0f, 1.0f}; // Default white
+    }
+
+    // Specular color
+    if (aiMat->Get(AI_MATKEY_COLOR_SPECULAR, color) == AI_SUCCESS)
+    {
+        material.specular_color = {color.r, color.g, color.b};
+    }
+    else
+    {
+        material.specular_color = {1.0f, 1.0f, 1.0f}; // Default white
+    }
+
+    // Shininess (this is the key one you asked about)
+    float shininess;
+    if (aiMat->Get(AI_MATKEY_SHININESS, shininess) == AI_SUCCESS)
+    {
+        material.shininess = shininess;
+    }
+    else
+    {
+        material.shininess = 32.0f; // Default reasonable value
+    }
+
+    // Optional: Other properties if you want them
+    float opacity;
+    if (aiMat->Get(AI_MATKEY_OPACITY, opacity) == AI_SUCCESS)
+    {
+        material.alpha = opacity;
+    }
+    else
+    {
+        material.alpha = 1.0f;
+    }
+
+    // Roughness/metallic aren't standard in older formats,
+    // but some exporters put them in custom properties
+    float roughness;
+    if (aiMat->Get(AI_MATKEY_ROUGHNESS_FACTOR, roughness) == AI_SUCCESS)
+    {
+        material.roughness = roughness;
+    }
+    else
+    {
+        // Convert shininess to roughness approximation
+        material.roughness = sqrt(2.0f / (shininess + 2.0f));
+    }
+
+    float metallic;
+    if (aiMat->Get(AI_MATKEY_METALLIC_FACTOR, metallic) == AI_SUCCESS)
+    {
+        material.metallic = metallic;
+    }
+    else
+    {
+        material.metallic = 0.0f; // Default non-metallic
+    }
+
+    return material;
+}
+
+static Mesh processMesh(aiMesh *mesh, const aiScene *scene, std::string &directory, std::vector<Texture> &textures_loaded, std::vector<Material> &materials)
 {
     std::vector<Vertex> vertices;
     std::vector<unsigned int> indices;
@@ -77,39 +176,32 @@ static Mesh processMesh(aiMesh *mesh, const aiScene *scene, std::string &directo
             indices.push_back(face.mIndices[j]);
     }
 
-    aiMaterial *material = scene->mMaterials[mesh->mMaterialIndex];
+    aiMaterial *aiMat = scene->mMaterials[mesh->mMaterialIndex];
+    Material material = processMaterial(aiMat, directory, textures_loaded);
 
-    std::vector<Texture> diffuseMaps = loadMaterialTextures(material, aiTextureType_DIFFUSE, "texture_diffuse", directory, textures_loaded);
-    textures.insert(textures.end(), diffuseMaps.begin(), diffuseMaps.end());
-
-    std::vector<Texture> specularMaps = loadMaterialTextures(material, aiTextureType_SPECULAR, "texture_specular", directory, textures_loaded);
-    textures.insert(textures.end(), specularMaps.begin(), specularMaps.end());
-
-    std::vector<Texture> normalMaps = loadMaterialTextures(material, aiTextureType_HEIGHT, "texture_normal", directory, textures_loaded);
-    textures.insert(textures.end(), normalMaps.begin(), normalMaps.end());
-
-    std::vector<Texture> heightMaps = loadMaterialTextures(material, aiTextureType_AMBIENT, "texture_height", directory, textures_loaded);
-    textures.insert(textures.end(), heightMaps.begin(), heightMaps.end());
+    // Store material and get its index
+    materials.push_back(material);
+    uint32_t material_index = materials.size() - 1;
 
     Mesh m;
     m.vertices = vertices;
     m.indices = indices;
-    m.textures = textures;
+    m.material_index = material_index;
     return m;
 }
 
-static void processNode(aiNode *node, const aiScene *scene, std::string &directory, std::vector<Texture> &textures_loaded, std::vector<Mesh> &meshes)
+static void processNode(aiNode *node, const aiScene *scene, std::string &directory, std::vector<Texture> &textures_loaded, std::vector<Mesh> &meshes, std::vector<Material> &materials)
 
 {
     for (unsigned int i = 0; i < node->mNumMeshes; i++)
     {
         aiMesh *mesh = scene->mMeshes[node->mMeshes[i]];
-        meshes.push_back(processMesh(mesh, scene, directory, textures_loaded));
+        meshes.push_back(processMesh(mesh, scene, directory, textures_loaded, materials));
     }
 
     for (unsigned int i = 0; i < node->mNumChildren; i++)
     {
-        processNode(node->mChildren[i], scene, directory, textures_loaded, meshes);
+        processNode(node->mChildren[i], scene, directory, textures_loaded, meshes, materials);
     }
 }
 Model load_model(std::string path)
@@ -130,6 +222,6 @@ Model load_model(std::string path)
 
     directory = path.substr(0, path.find_last_of('/'));
 
-    processNode(scene->mRootNode, scene, directory, textures_loaded, model.meshes);
+    processNode(scene->mRootNode, scene, directory, textures_loaded, model.meshes, model.materials);
     return model;
 }

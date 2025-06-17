@@ -30,10 +30,30 @@ struct Texture
     std::string path;
 };
 
+// Simple, data-oriented approach
+struct Material
+{
+    // Texture handles/IDs (not pointers)
+    uint32_t diffuse_texture = 0;
+    uint32_t specular_texture = 0;
+    uint32_t normal_texture = 0;
+    uint32_t roughness_texture = 0;
+    uint32_t metallic_texture = 0;
+
+    // Material properties
+    glm::vec3 diffuse_color = {1.0f, 1.0f, 1.0f};
+    glm::vec3 specular_color = {1.0f, 1.0f, 1.0f};
+    float roughness = 0.5f;
+    float metallic = 0.0f;
+    float alpha = 1.0f;
+    float shininess = 32.0f;
+};
+
 struct Mesh
 {
+
+    unsigned int material_index;
     std::vector<Vertex> vertices;
-    std::vector<Texture> textures;
     std::vector<unsigned int> indices;
     GLuint VBO, EBO, VAO;
 };
@@ -41,6 +61,7 @@ struct Mesh
 struct Model
 {
     std::vector<Mesh> meshes;
+    std::vector<Material> materials;
     GLuint IVBO; /*instancing*/
     // unsigned int maxInstances{0};
 };

@@ -1,45 +1,58 @@
 #include "model_setup.hpp"
 
-static void bindMeshTextures(const Mesh &mesh, unsigned int shader)
-
+static void bindMaterial(const Material &material, unsigned int shader)
 {
-    uint32_t diffuseNr = 1;
-    uint32_t specularNr = 1;
-    uint32_t normalNr = 1;
-    uint32_t heightNr = 1;
+    int textureUnit = 0;
 
-    for (uint32_t i = 0; i < mesh.textures.size(); i++)
+    // Bind diffuse texture
+    if (material.diffuse_texture != 0)
     {
-        glActiveTexture(GL_TEXTURE0 + i);
-
-        // Determine texture type and create uniform name
-        std::string number;
-        std::string name = mesh.textures[i].type;
-
-        if (name == "texture_diffuse")
-        {
-            number = std::to_string(diffuseNr++);
-        }
-        else if (name == "texture_specular")
-        {
-            number = std::to_string(specularNr++);
-        }
-        else if (name == "texture_normal")
-        {
-            number = std::to_string(normalNr++);
-        }
-        else if (name == "texture_height")
-        {
-            number = std::to_string(heightNr++);
-        }
-
-        // Set the sampler uniform
-
-        Shader::setInt((name + number).c_str(), shader, i);
-        glBindTexture(GL_TEXTURE_2D, mesh.textures[i].id);
+        glActiveTexture(GL_TEXTURE0 + textureUnit);
+        glBindTexture(GL_TEXTURE_2D, material.diffuse_texture);
+        Shader::setInt("material.diffuse", shader, textureUnit);
+        Shader::setBool("material.hasDiffuseTexture", shader, true);
+        textureUnit++;
     }
-}
+    else
+    {
+        Shader::setBool("material.hasDiffuseTexture", shader, false);
+    }
 
+    // Bind specular texture
+    if (material.specular_texture != 0)
+    {
+        glActiveTexture(GL_TEXTURE0 + textureUnit);
+        glBindTexture(GL_TEXTURE_2D, material.specular_texture);
+        Shader::setInt("material.specular", shader, textureUnit);
+        Shader::setBool("material.hasSpecularTexture", shader, true);
+        textureUnit++;
+    }
+    else
+    {
+        Shader::setBool("material.hasSpecularTexture", shader, false);
+    }
+
+    // Bind normal texture
+    if (material.normal_texture != 0)
+    {
+        glActiveTexture(GL_TEXTURE0 + textureUnit);
+        glBindTexture(GL_TEXTURE_2D, material.normal_texture);
+        Shader::setInt("material.normalMap", shader, textureUnit);
+        Shader::setBool("material.hasNormalMap", shader, true);
+        textureUnit++;
+    }
+    else
+    {
+        Shader::setBool("material.hasNormalMap", shader, false);
+    }
+
+    // Set material properties
+    Shader::setVec3("material.diffuseColor", shader, material.diffuse_color);
+    Shader::setVec3("material.specularColor", shader, material.specular_color);
+    Shader::setFloat("material.roughness", shader, material.roughness);
+    Shader::setFloat("material.metallic", shader, material.metallic);
+    Shader::setFloat("material.shininess", shader, material.shininess);
+}
 static void unloadMesh(Mesh *mesh)
 {
     glDeleteBuffers(1, &mesh->VBO);
@@ -127,8 +140,8 @@ void drawModel(unsigned int shader, Model *model, std::vector<glm::mat4> &instan
     for (size_t i = 0; i < model->meshes.size(); i++)
     {
         const Mesh &mesh = model->meshes[i];
-
-        bindMeshTextures(mesh, shader);
+        Material &material = model->materials[mesh.material_index];
+        bindMaterial(material, shader);
 
         // Draw this mesh with all instances
         glBindVertexArray(mesh.VAO);
