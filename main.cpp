@@ -16,6 +16,8 @@
 #include <memory>
 #include "model_loader.hpp"
 
+#define MAX_OBJECTS_IN_SCENE 10
+
 // Global variables
 const unsigned int SCR_WIDTH = 1200;
 const unsigned int SCR_HEIGHT = 800;
@@ -36,18 +38,87 @@ void processInput(GLFWwindow *window);
 
 Model ourModel;
 std::vector<glm::mat4> instances;
-int i = 0;
+
+int i = 1;
 void add_instance()
 {
 
     glm::mat4 model = glm::mat4(1.0f);
     model = glm::rotate(model, (float)M_PI, glm::vec3(0.0f, 0.0f, 1.0f));
-    model = glm::translate(model, glm::vec3(0.0f, 3.0f, i * 5.0f));
+    model = glm::translate(model, glm::vec3(0.0f, i * 3.0f, 0.0f));
     model = glm::scale(model, glm::vec3(0.01));
 
     instances.push_back(model);
     i++;
     uploadInstanceData(&ourModel, instances);
+}
+
+// Example light creation
+PointLight createPointLight(glm::vec3 pos, glm::vec3 col, float intensity = 1.0f, float range = 100.0f)
+{
+    PointLight light;
+    light.position = pos;
+    light.color = col;
+    light.intensity = intensity;
+    light.range = 100000.0f; // hack
+
+    // Common attenuation values for different ranges
+    if (range <= 7.0f)
+    {
+        light.constant = 1.0f;
+        light.linear = 0.7f;
+        light.quadratic = 1.8f;
+    }
+    else if (range <= 13.0f)
+    {
+        light.constant = 1.0f;
+        light.linear = 0.35f;
+        light.quadratic = 0.44f;
+    }
+    else if (range <= 20.0f)
+    {
+        light.constant = 1.0f;
+        light.linear = 0.22f;
+        light.quadratic = 0.20f;
+    }
+    else
+    {
+        light.constant = 1.0f;
+        light.linear = 0.09f;
+        light.quadratic = 0.032f;
+    }
+
+    return light;
+}
+
+void uploadLightData(std::vector<PointLight> &lights, unsigned int shaderID)
+{
+    // Pack light data
+    std::vector<float> lightData;
+    for (const auto &light : lights)
+    {
+        // Position (3 floats)
+        lightData.push_back(light.position.x);
+        lightData.push_back(light.position.y);
+        lightData.push_back(light.position.z);
+
+        // Color (3 floats)
+        lightData.push_back(light.color.x);
+        lightData.push_back(light.color.y);
+        lightData.push_back(light.color.z);
+
+        // Attenuation (3 floats)
+        lightData.push_back(light.constant);
+        lightData.push_back(light.linear);
+        lightData.push_back(light.quadratic);
+    }
+
+    // Upload the packed lightData array (not the lights vector!)
+    // Upload the packed lightData array (not the lights vector!)
+    glUniform1fv(glGetUniformLocation(shaderID, "lightData"), lightData.size(), lightData.data());
+
+    // Also upload the count
+    glUniform1i(glGetUniformLocation(shaderID, "numPointLights"), static_cast<int>(lights.size()));
 }
 
 int main()
@@ -93,8 +164,17 @@ int main()
     // Load models (replace with your model path)
     // Model ourModel("ford/scene.gltf", true);
     ourModel = load_model("ford/scene.gltf");
+
     // ourModel.maxInstances = 2;
     setupModel(&ourModel, 10);
+    add_instance();
+    std::vector<PointLight> lights;
+    lights.push_back(createPointLight(glm::vec3(0.0f, 10.0f, 0.0f), glm::vec3(1.0f)));
+
+    // Shader::setVec3("lightPos", ID, glm::vec3(1.2f, 100.0f, 2.0f));
+    // Shader::setVec3("viewPos", ID, camera.Position);
+    // Shader::setVec3("lightColor", ID, glm::vec3(1.0f, 1.0f, 1.0f));
+    // Shader::setVec3("objectColor", ID, glm::vec3(0.0f, 0.0f, 0.0f));
 
     // Render loop
     while (!glfwWindowShouldClose(window))
@@ -115,15 +195,17 @@ int main()
         glm::mat4 view = camera.GetViewMatrix();
         Shader::setMat4("projection", ID, projection);
         Shader::setMat4("view", ID, view);
+        Shader::setVec3("viewPos", ID, camera.Position);
+        uploadLightData(lights, ID);
 
         // World transformation
         // Shader::setMat4("model", ID, model);
 
         // Lighting
-        Shader::setVec3("lightPos", ID, glm::vec3(1.2f, 100.0f, 2.0f));
-        Shader::setVec3("viewPos", ID, camera.Position);
-        Shader::setVec3("lightColor", ID, glm::vec3(1.0f, 1.0f, 1.0f));
-        Shader::setVec3("objectColor", ID, glm::vec3(0.0f, 0.0f, 0.0f));
+        // Shader::setVec3("lightPos", ID, glm::vec3(1.2f, 100.0f, 2.0f));
+
+        // Shader::setVec3("lightColor", ID, glm::vec3(1.0f, 1.0f, 1.0f));
+        // Shader::setVec3("objectColor", ID, glm::vec3(0.0f, 0.0f, 0.0f));
 
         drawModel(ID, &ourModel, instances);
 
@@ -137,11 +219,6 @@ int main()
 
 void processInput(GLFWwindow *window)
 {
-
-    if (glfwGetKey(window, GLFW_KEY_P) == GLFW_PRESS)
-    {
-        add_instance();
-    }
 
     if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
         glfwSetWindowShouldClose(window, true);

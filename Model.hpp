@@ -33,8 +33,8 @@ struct Texture
 struct Mesh
 {
     std::vector<Vertex> vertices;
-    std::vector<unsigned int> indices;
     std::vector<Texture> textures;
+    std::vector<unsigned int> indices;
     GLuint VBO, EBO, VAO;
 };
 
@@ -43,4 +43,18 @@ struct Model
     std::vector<Mesh> meshes;
     GLuint IVBO; /*instancing*/
     // unsigned int maxInstances{0};
+};
+
+struct PointLight
+{
+    glm::vec3 position;
+    float intensity;
+
+    glm::vec3 color;
+    float range;
+
+    float constant;
+    float linear;
+    float quadratic;
+    float padding; // Not used, just for alignment
 };

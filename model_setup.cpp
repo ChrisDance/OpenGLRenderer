@@ -106,6 +106,8 @@ static void setupInstanceAttributes(Model *model, Mesh *mesh)
     glBindVertexArray(0);
 }
 
+/* exposed */
+
 void uploadInstanceData(Model *model, std::vector<glm::mat4> instances)
 {
     size_t dataSize = instances.size() * sizeof(glm::mat4);
