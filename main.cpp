@@ -52,73 +52,48 @@ void add_instance()
     i++;
     uploadInstanceData(&ourModel, instances);
 }
-
-// Example light creation
-PointLight createPointLight(glm::vec3 pos, glm::vec3 col, float intensity = 1.0f, float range = 100.0f)
+PointLight createPointLight(glm::vec3 position, glm::vec3 color, float intensity = 1.0f)
 {
     PointLight light;
-    light.position = pos;
-    light.color = col;
-    light.intensity = intensity;
-    light.range = 100000.0f; // hack
+    light.position = position;
+    light.color = color * intensity;
 
-    // Common attenuation values for different ranges
-    if (range <= 7.0f)
-    {
-        light.constant = 1.0f;
-        light.linear = 0.7f;
-        light.quadratic = 1.8f;
-    }
-    else if (range <= 13.0f)
-    {
-        light.constant = 1.0f;
-        light.linear = 0.35f;
-        light.quadratic = 0.44f;
-    }
-    else if (range <= 20.0f)
-    {
-        light.constant = 1.0f;
-        light.linear = 0.22f;
-        light.quadratic = 0.20f;
-    }
-    else
-    {
-        light.constant = 1.0f;
-        light.linear = 0.09f;
-        light.quadratic = 0.032f;
-    }
+    // Calculate range based on intensity for better attenuation
+    float range = intensity * 10.0f; // Adjust multiplier as needed
+
+    // Use more reasonable attenuation values
+    light.constant = 1.0f;
+    light.linear = 4.5f / range;
+    light.quadratic = 75.0f / (range * range);
 
     return light;
 }
-
+// Corrected uploadLightData function
 void uploadLightData(std::vector<PointLight> &lights, unsigned int shaderID)
 {
-    // Pack light data
-    std::vector<float> lightData;
-    for (const auto &light : lights)
-    {
-        // Position (3 floats)
-        lightData.push_back(light.position.x);
-        lightData.push_back(light.position.y);
-        lightData.push_back(light.position.z);
-
-        // Color (3 floats)
-        lightData.push_back(light.color.x);
-        lightData.push_back(light.color.y);
-        lightData.push_back(light.color.z);
-
-        // Attenuation (3 floats)
-        lightData.push_back(light.constant);
-        lightData.push_back(light.linear);
-        lightData.push_back(light.quadratic);
-    }
-
-    // Upload the packed lightData array (not the lights vector!)
-    // Upload the packed lightData array (not the lights vector!)
-    glUniform1fv(glGetUniformLocation(shaderID, "lightData"), lightData.size(), lightData.data());
-
-    // Also upload the count
+    // Upload number of lights
     glUniform1i(glGetUniformLocation(shaderID, "numPointLights"), static_cast<int>(lights.size()));
+
+    // Upload each light individually
+    for (size_t i = 0; i < lights.size() && i < 32; ++i)
+    {
+        std::string base = "pointLights[" + std::to_string(i) + "]";
+
+        glUniform3f(glGetUniformLocation(shaderID, (base + ".position").c_str()),
+                    lights[i].position.x, lights[i].position.y, lights[i].position.z);
+
+        glUniform3f(glGetUniformLocation(shaderID, (base + ".color").c_str()),
+                    lights[i].color.x, lights[i].color.y, lights[i].color.z);
+
+        glUniform1f(glGetUniformLocation(shaderID, (base + ".constant").c_str()),
+                    lights[i].constant);
+
+        glUniform1f(glGetUniformLocation(shaderID, (base + ".linear").c_str()),
+                    lights[i].linear);
+
+        glUniform1f(glGetUniformLocation(shaderID, (base + ".quadratic").c_str()),
+                    lights[i].quadratic);
+    }
 }
 
 int main()
@@ -169,8 +144,11 @@ int main()
     setupModel(&ourModel, 10);
     add_instance();
     std::vector<PointLight> lights;
-    lights.push_back(createPointLight(glm::vec3(0.0f, 10.0f, 0.0f), glm::vec3(1.0f)));
+    lights.push_back(createPointLight(glm::vec3(0.0f, 10.0f, 0.0f), glm::vec3(1.0f), 4.0f));
+    lights.push_back(createPointLight(glm::vec3(10.0f, 10.0f, 0.0f), glm::vec3(1.0f), 5.0f));
 
+    Shader::use(ID);
+    uploadLightData(lights, ID);
     // Shader::setVec3("lightPos", ID, glm::vec3(1.2f, 100.0f, 2.0f));
     // Shader::setVec3("viewPos", ID, camera.Position);
     // Shader::setVec3("lightColor", ID, glm::vec3(1.0f, 1.0f, 1.0f));
@@ -196,7 +174,6 @@ int main()
         Shader::setMat4("projection", ID, projection);
         Shader::setMat4("view", ID, view);
         Shader::setVec3("viewPos", ID, camera.Position);
-        uploadLightData(lights, ID);
 
         // World transformation
         // Shader::setMat4("model", ID, model);
