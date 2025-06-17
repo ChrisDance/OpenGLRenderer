@@ -14,7 +14,6 @@
 #include <fstream>
 #include <sstream>
 #include <memory>
-#include "Model.hpp"
 #include "model_loader.hpp"
 
 // Global variables
@@ -34,6 +33,22 @@ void framebuffer_size_callback(GLFWwindow *window, int width, int height);
 void mouse_callback(GLFWwindow *window, double xpos, double ypos);
 void scroll_callback(GLFWwindow *window, double xoffset, double yoffset);
 void processInput(GLFWwindow *window);
+
+Model ourModel;
+std::vector<glm::mat4> instances;
+int i = 0;
+void add_instance()
+{
+
+    glm::mat4 model = glm::mat4(1.0f);
+    model = glm::rotate(model, (float)M_PI, glm::vec3(0.0f, 0.0f, 1.0f));
+    model = glm::translate(model, glm::vec3(0.0f, 3.0f, i * 5.0f));
+    model = glm::scale(model, glm::vec3(0.01));
+
+    instances.push_back(model);
+    i++;
+    uploadInstanceData(&ourModel, instances);
+}
 
 int main()
 {
@@ -77,22 +92,9 @@ int main()
 
     // Load models (replace with your model path)
     // Model ourModel("ford/scene.gltf", true);
-    Model_ ourModel = load_model("ford/scene.gltf");
-    ourModel.maxInstances = 2;
-    setupModel(&ourModel);
-    std::vector<glm::mat4> instances;
-
-    for (int i = 0; i < 2; i++)
-    {
-
-        glm::mat4 model = glm::mat4(1.0f);
-        model = glm::rotate(model, (float)M_PI, glm::vec3(0.0f, 0.0f, 1.0f));
-        model = glm::translate(model, glm::vec3(0.0f, 3.0f, i * 5.0f));
-        model = glm::scale(model, glm::vec3(0.01));
-
-        instances.push_back(model);
-    }
-    uploadInstanceData(&ourModel, instances);
+    ourModel = load_model("ford/scene.gltf");
+    // ourModel.maxInstances = 2;
+    setupModel(&ourModel, 10);
 
     // Render loop
     while (!glfwWindowShouldClose(window))
@@ -123,13 +125,7 @@ int main()
         Shader::setVec3("lightColor", ID, glm::vec3(1.0f, 1.0f, 1.0f));
         Shader::setVec3("objectColor", ID, glm::vec3(0.0f, 0.0f, 0.0f));
 
-        draw(ID, &ourModel, instances);
-
-        // unsigned int shader, Model_ *model, std::vector<glm::mat4> &instances)
-        // for (auto &mesh : ourModel.meshes)
-        // {
-        //     Draw(&mesh, ID);
-        // }
+        drawModel(ID, &ourModel, instances);
 
         glfwSwapBuffers(window);
         glfwPollEvents();
@@ -141,6 +137,12 @@ int main()
 
 void processInput(GLFWwindow *window)
 {
+
+    if (glfwGetKey(window, GLFW_KEY_P) == GLFW_PRESS)
+    {
+        add_instance();
+    }
+
     if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
         glfwSetWindowShouldClose(window, true);
 

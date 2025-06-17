@@ -9,7 +9,7 @@
 #include <assimp/postprocess.h>
 #include "texture_utils.hpp"
 #include "shader.hpp"
-#include "model_.hpp"
+#include "model.hpp"
 #include <iostream>
 #include <vector>
 #include <string>
@@ -17,9 +17,6 @@
 #include <sstream>
 #include <memory>
 
-void Draw(Mesh_ *mesh, unsigned int Shader);
-
-void draw(unsigned int shader, Model_ *model, std::vector<glm::mat4> &instances);
-
-void uploadInstanceData(Model_ *model, std::vector<glm::mat4> instances);
-void setupModel(Model_ *model);
+void drawModel(unsigned int shader, Model *model, std::vector<glm::mat4> &instances);
+void uploadInstanceData(Model *model, std::vector<glm::mat4> instances);
+void setupModel(Model *model, int maxInstances);

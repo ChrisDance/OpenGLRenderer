@@ -31,7 +31,7 @@ static std::vector<Texture> loadMaterialTextures(aiMaterial *mat, aiTextureType 
     return textures;
 }
 
-static Mesh_ processMesh(aiMesh *mesh, const aiScene *scene, std::string &directory, std::vector<Texture> &textures_loaded)
+static Mesh processMesh(aiMesh *mesh, const aiScene *scene, std::string &directory, std::vector<Texture> &textures_loaded)
 {
     std::vector<Vertex> vertices;
     std::vector<unsigned int> indices;
@@ -91,14 +91,14 @@ static Mesh_ processMesh(aiMesh *mesh, const aiScene *scene, std::string &direct
     std::vector<Texture> heightMaps = loadMaterialTextures(material, aiTextureType_AMBIENT, "texture_height", directory, textures_loaded);
     textures.insert(textures.end(), heightMaps.begin(), heightMaps.end());
 
-    Mesh_ m;
+    Mesh m;
     m.vertices = vertices;
     m.indices = indices;
     m.textures = textures;
     return m;
 }
 
-static void processNode(aiNode *node, const aiScene *scene, std::string &directory, std::vector<Texture> &textures_loaded, std::vector<Mesh_> &meshes)
+static void processNode(aiNode *node, const aiScene *scene, std::string &directory, std::vector<Texture> &textures_loaded, std::vector<Mesh> &meshes)
 
 {
     for (unsigned int i = 0; i < node->mNumMeshes; i++)
@@ -112,10 +112,10 @@ static void processNode(aiNode *node, const aiScene *scene, std::string &directo
         processNode(node->mChildren[i], scene, directory, textures_loaded, meshes);
     }
 }
-Model_ load_model(std::string path)
+Model load_model(std::string path)
 {
     Assimp::Importer importer;
-    Model_ model;
+    Model model;
     std::vector<Texture> textures_loaded;
     std::string directory;
     bool gammaCorrection;
