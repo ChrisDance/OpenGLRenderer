@@ -104,6 +104,4 @@ struct LightingData {
   int numPointLights;
   float _pad1[3]; // align array to 16 bytes
   PointLight pointLights[MAX_LIGHTS];
-  glm::vec3 viewPos;
-  float _pad2;
 };

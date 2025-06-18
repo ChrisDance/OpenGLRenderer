@@ -117,8 +117,6 @@ void setupLighting(unsigned int shaderID) {
     lighting.pointLights[1].linear = 0.09f;
     lighting.pointLights[1].quadratic = 0.032f;
 
-    lighting.viewPos = camera.Position; // Use actual camera position
-
     // Upload lighting data
     Shader::setUniformBuffer("LightingData", shaderID, &lighting, sizeof(lighting), 0);
 }
@@ -197,13 +195,14 @@ int main()
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         Shader::use(ID);
+        setupLighting(ID);
 
         // View/projection transformations
         glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
         glm::mat4 view = camera.GetViewMatrix();
         Shader::setMat4("projection", ID, projection);
         Shader::setMat4("view", ID, view);
-        // Shader::setVec3("viewPos", ID, camera.Position);
+        Shader::setVec3("viewPos", ID, camera.Position);
 
 
 

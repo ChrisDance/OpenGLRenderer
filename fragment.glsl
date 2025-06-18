@@ -22,15 +22,14 @@ struct DirectionalLight {
 };
 
 // Uniform buffer for lighting data
-layout (std140) uniform LightingData {
+layout(std140) uniform LightingData {
     DirectionalLight directLight;
     int numPointLights;
     PointLight pointLights[MAX_LIGHTS];
-    vec3 viewPos;
 };
 
 // Uniform buffer for material properties
-layout (std140) uniform MaterialData {
+layout(std140) uniform MaterialData {
     vec3 diffuseColor;
     vec3 specularColor;
     float roughness;
@@ -40,6 +39,8 @@ layout (std140) uniform MaterialData {
     bool hasSpecularTexture;
     bool hasNormalMap;
 };
+
+uniform vec3 viewPos;
 
 // Samplers as regular uniforms
 uniform sampler2D material_diffuse;
@@ -122,7 +123,7 @@ void main()
     vec3 result = calculateDirectionalLight(directLight, norm, viewDirection, materialDiffuse);
 
     // Point lights
-    for(int i = 0; i < numPointLights && i < MAX_LIGHTS; i++) {
+    for (int i = 0; i < numPointLights && i < MAX_LIGHTS; i++) {
         result += calculatePointLight(pointLights[i], FragPos, norm, viewDirection, materialDiffuse);
     }
 
