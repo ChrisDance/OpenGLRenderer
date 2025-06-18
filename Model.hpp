@@ -54,9 +54,7 @@ struct Material {
   uint32_t roughness_texture = 0;
   uint32_t metallic_texture = 0;
 
-  // Helper methods
 
-  size_t gpuSize() { return offsetof(Material, diffuse_texture); }
 };
 
 struct Mesh {
@@ -73,30 +71,25 @@ struct Model {
   GLuint IVBO; /*instancing*/
                // unsigned int maxInstances{0};
 };
-
 struct PointLight {
-  glm::vec3 position;
-  float _pad1;
-  glm::vec3 color;
-  float _pad2;
-  float constant;
-  float linear;
-  float quadratic;
-  float _pad3;
+    glm::vec3 position;
+    glm::vec3 color;
+    float constant;
+    float linear;
+    float quadratic;
+    // Remove _pad variables
 };
 
 struct DirectionalLight {
-  glm::vec3 Direction;
-  float _pad1;
-  glm::vec3 Intensity;
-  float _pad2;
-  glm::vec3 Color;
-  float _pad3;
+    glm::vec3 Direction;
+    glm::vec3 Intensity;
+    glm::vec3 Color;
+    // Remove _pad variables
 };
 
 struct LightingData {
-  DirectionalLight directLight;
-  int numPointLights;
-  float _pad1[3]; // align array to 16 bytes
-  PointLight pointLights[MAX_LIGHTS];
+    DirectionalLight directLight;
+    int numPointLights;
+    PointLight pointLights[MAX_LIGHTS];
+    // Remove _pad arrays
 };

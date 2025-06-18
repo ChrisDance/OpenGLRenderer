@@ -19,8 +19,8 @@
 
 #define MAX_OBJECTS_IN_SCENE 10
 
-// fps_counter.h
-#pragma once
+
+
 
 void fps_counter_init();
 void fps_counter_update();
@@ -95,31 +95,29 @@ void add_instance(Model &m, glm::vec3 trans, float scale, glm::vec3 rot = glm::v
     uploadInstanceData(&m, instances);
 }
 void setupLighting(unsigned int shaderID) {
-    LightingData lighting = {};
-
     // Directional light
-    lighting.directLight.Direction = glm::vec3(-0.2f, -1.0f, -0.3f);
-    lighting.directLight.Intensity = glm::vec3(0.5f, 0.5f, 0.5f); // Reduced intensity
-    lighting.directLight.Color = glm::vec3(1.0f, 1.0f, 1.0f); // White light
+    Shader::setVec3("directLight.Direction", shaderID, glm::vec3(-0.2f, -1.0f, -0.3f));
+    Shader::setVec3("directLight.Intensity", shaderID, glm::vec3(0.5f, 0.5f, 0.5f));
+    Shader::setVec3("directLight.Color", shaderID, glm::vec3(1.0f, 1.0f, 1.0f));
 
-    // Point lights
-    lighting.numPointLights = 2;
+    // Number of point lights
+    Shader::setInt("numPointLights", shaderID, 2);
 
-    lighting.pointLights[0].position = glm::vec3(2.0f, 1.0f, 3.0f);
-    lighting.pointLights[0].color = glm::vec3(1.0f, 0.5f, 0.3f);
-    lighting.pointLights[0].constant = 1.0f;
-    lighting.pointLights[0].linear = 0.09f;
-    lighting.pointLights[0].quadratic = 0.032f;
+    // Point light 0
+    Shader::setVec3("pointLights[0].position", shaderID, glm::vec3(2.0f, 1.0f, 3.0f));
+    Shader::setVec3("pointLights[0].color", shaderID, glm::vec3(1.0f, 0.5f, 0.3f));
+    Shader::setFloat("pointLights[0].constant", shaderID, 1.0f);
+    Shader::setFloat("pointLights[0].linear", shaderID, 0.09f);
+    Shader::setFloat("pointLights[0].quadratic", shaderID, 0.032f);
 
-    lighting.pointLights[1].position = glm::vec3(-2.0f, 2.0f, -1.0f);
-    lighting.pointLights[1].color = glm::vec3(0.3f, 0.5f, 1.0f);
-    lighting.pointLights[1].constant = 1.0f;
-    lighting.pointLights[1].linear = 0.09f;
-    lighting.pointLights[1].quadratic = 0.032f;
-
-    // Upload lighting data
-    Shader::setUniformBuffer("LightingData", shaderID, &lighting, sizeof(lighting), 0);
+    // Point light 1
+    Shader::setVec3("pointLights[1].position", shaderID, glm::vec3(-2.0f, 2.0f, -1.0f));
+    Shader::setVec3("pointLights[1].color", shaderID, glm::vec3(0.3f, 0.5f, 1.0f));
+    Shader::setFloat("pointLights[1].constant", shaderID, 1.0f);
+    Shader::setFloat("pointLights[1].linear", shaderID, 0.09f);
+    Shader::setFloat("pointLights[1].quadratic", shaderID, 0.032f);
 }
+
 
 
 int main()
