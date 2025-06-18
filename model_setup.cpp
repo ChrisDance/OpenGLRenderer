@@ -2,13 +2,8 @@
 
 static void bindMaterial(Material &material, unsigned int shader)
 {
-    // Update texture flags before uploading
-    material.updateTextureFlags();
-
-    // Upload material data to UBO
     Shader::setUniformBuffer("MaterialData", shader, &material, material.gpuSize(), 1);
 
-    // Bind textures manually (samplers can't be in UBOs)
     int textureUnit = 0;
 
     // Bind diffuse texture

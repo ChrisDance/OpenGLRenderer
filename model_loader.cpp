@@ -122,6 +122,8 @@ static Material processMaterial(aiMaterial *aiMat, const std::string &directory,
         material.metallic = 0.0f; // Default non-metallic
     }
 
+    material.updateTextureFlags();
+
     return material;
 }
 
