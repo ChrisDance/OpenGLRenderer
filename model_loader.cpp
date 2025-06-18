@@ -1,5 +1,6 @@
 
 #include "model_loader.hpp"
+#include "model.hpp"
 
 // Helper function to load a single texture with duplicate checking
 static unsigned int loadTexture(const char *path, const std::string &directory,
@@ -218,21 +219,27 @@ processNode(aiNode *node, const aiScene *scene, std::string &directory,
     }
 }
 
-AABB calculateMeshAABB(const std::vector<Vertex>& vertices) {
+
+
+// Convert aiAABB to your AABB struct
+static AABB convertAiAABB(const aiAABB &aiAabb)
+{
     AABB aabb;
-
-    for (const auto& vertex : vertices) {
-        aabb.expand(vertex.Position);
-    }
-
+    aabb.min = glm::vec3(aiAabb.mMin.x, aiAabb.mMin.y, aiAabb.mMin.z);
+    aabb.max = glm::vec3(aiAabb.mMax.x, aiAabb.mMax.y, aiAabb.mMax.z);
     return aabb;
 }
 
-AABB calculateModelAABB(const Model& model) {
+// Calculate AABB from Assimp scene
+static AABB calculateModelAABBFromAssimp(const aiScene *scene)
+{
     AABB modelAABB;
 
-    for (const auto& mesh : model.meshes) {
-        AABB meshAABB = calculateMeshAABB(mesh.vertices);
+    // Iterate through all meshes and combine their AABBs
+    for (unsigned int i = 0; i < scene->mNumMeshes; i++)
+    {
+        const aiMesh *mesh = scene->mMeshes[i];
+        AABB meshAABB = convertAiAABB(mesh->mAABB);
         modelAABB.expand(meshAABB);
     }
 
@@ -248,7 +255,7 @@ Model load_model(std::string path)
 
     const aiScene *scene = importer.ReadFile(
         path, aiProcess_Triangulate | aiProcess_GenSmoothNormals |
-                  aiProcess_FlipUVs | aiProcess_CalcTangentSpace);
+                  aiProcess_FlipUVs | aiProcess_CalcTangentSpace | aiProcess_GenBoundingBoxes);
 
     if (!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE ||
         !scene->mRootNode)
@@ -262,7 +269,7 @@ Model load_model(std::string path)
     processNode(scene->mRootNode, scene, directory, textures_loaded, model.meshes,
                 model.materials);
 
-    model.aabb= calculateModelAABB(model);
+    model.aabb= calculateModelAABBFromAssimp(scene);
 
     return model;
 }

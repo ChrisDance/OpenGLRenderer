@@ -79,7 +79,7 @@ void mouse_callback(GLFWwindow *window, double xpos, double ypos);
 void scroll_callback(GLFWwindow *window, double xoffset, double yoffset);
 void processInput(GLFWwindow *window);
 
-Model ourModel;
+
 
 void add_instance(Model &m, glm::vec3 trans, float scale, glm::vec3 rot = glm::vec3(0))
 {
@@ -90,7 +90,8 @@ void add_instance(Model &m, glm::vec3 trans, float scale, glm::vec3 rot = glm::v
     model = glm::rotate(model, (float)M_PI, rot);
     model = glm::scale(model, glm::vec3(scale));
 
-    ourModel.aabb.transform(model);
+    //
+    m.aabb = m.aabb.transform(model);
 
     instances.push_back(model);
 
@@ -119,16 +120,19 @@ void setupLighting(unsigned int shaderID) {
     Shader::setFloat("pointLights[1].linear", shaderID, 0.09f);
     Shader::setFloat("pointLights[1].quadratic", shaderID, 0.032f);
 }
+inline float distanceToPlane(const glm::vec4& plane, const glm::vec3& point) {
+    return glm::dot(glm::vec3(plane), point) + plane.w;
+}
 
 inline bool isAABBOutsidePlane(const AABB& aabb, const glm::vec4& plane) {
-    // Get the positive vertex (farthest point in the direction of the plane normal)
-    glm::vec3 positiveVertex;
-    positiveVertex.x = (plane.x >= 0.0f) ? aabb.max.x : aabb.min.x;
-    positiveVertex.y = (plane.y >= 0.0f) ? aabb.max.y : aabb.min.y;
-    positiveVertex.z = (plane.z >= 0.0f) ? aabb.max.z : aabb.min.z;
+    // Get the vertex closest to the plane (negative vertex)
+    glm::vec3 negativeVertex;
+    negativeVertex.x = (plane.x < 0.0f) ? aabb.max.x : aabb.min.x;
+    negativeVertex.y = (plane.y < 0.0f) ? aabb.max.y : aabb.min.y;
+    negativeVertex.z = (plane.z < 0.0f) ? aabb.max.z : aabb.min.z;
 
-    // If the positive vertex is behind the plane, the entire AABB is outside
-    return (glm::dot(glm::vec3(plane), positiveVertex) + plane.w) < 0.0f;
+    // If the closest vertex is outside (negative distance), the entire AABB is outside
+    return distanceToPlane(plane, negativeVertex) < 0.0f;
 }
 
 // Test if AABB is within or intersects the frustum
@@ -141,7 +145,6 @@ bool isAABBInFrustum(const AABB& aabb, const Frustum& frustum) {
     }
     return true; // AABB is inside or intersects the frustum
 }
-
 
 int main()
 {
@@ -169,6 +172,8 @@ int main()
     glfwSetScrollCallback(window, scroll_callback);
 
     glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+    // AABB test(glm::vec3(1000), glm::vec3(1001));
+
 
     // Initialize GLAD
     if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
@@ -182,7 +187,7 @@ int main()
 
     auto ID = Shader::create("vertex.glsl", "fragment.glsl");
 
-    ourModel = load_model("ford/scene.gltf");
+    Model ourModel = load_model("ford/scene.gltf");
 
     setupModel(&ourModel, 10);
     add_instance(ourModel, glm::vec3(0), 0.01f, glm::vec3(0, 0, 1));
@@ -213,15 +218,26 @@ int main()
         Shader::setMat4("projection", ID, projection);
         Shader::setMat4("view", ID, view);
         Shader::setVec3("viewPos", ID, camera.Position);
-        
+
 
 
         camera.CalculateFrustum(projection, view);
+
+       // if(isAABBInFrustum(test, camera.ViewFrustum))
+       // {
+       //     std::cout << "Test is in view frustum" << std::endl;
+       // } else {
+       //     std::cout << "Test is not in view frustum" << std::endl;
+       // }
+
+
         if(isAABBInFrustum(ourModel.aabb, camera.ViewFrustum))
         {
             drawModel(ID, &ourModel, 1);
+
+            std::cout << "YES " << std::endl;
         } else {
-            std::cout << "Model is not in view frustum" << std::endl;
+            std::cout << "NO " << std::endl;
         }
 
 
