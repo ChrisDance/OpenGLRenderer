@@ -3,6 +3,7 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
+#include "particle_emitter.hpp"
 #include "stb_image.h"
 #include <assimp/Importer.hpp>
 #include <assimp/scene.h>
@@ -16,11 +17,65 @@
 #include <sstream>
 #include <memory>
 #include "model_loader.hpp"
-
+#include "particle_emitter.hpp"
 #define MAX_OBJECTS_IN_SCENE 10
 
 
 
+
+unsigned int particleShader;
+std::vector<std::unique_ptr<ParticleEmitter>> particleEmitters;
+
+// Add this function before main()
+void setupParticleSystem() {
+    // Create particle shader
+    particleShader = Shader::create("particle_vertex.glsl", "particle_fragment.glsl");
+
+    // Create some particle emitters with different effects
+
+    // Fire emitter at origin
+    auto fireEmitter = std::make_unique<ParticleEmitter>(ParticlePresets::createFire());
+    fireEmitter->setPosition(glm::vec3(0.0f, 0.0f, 0.0f));
+    particleEmitters.push_back(std::move(fireEmitter));
+
+    // Smoke emitter slightly above fire
+    auto smokeEmitter = std::make_unique<ParticleEmitter>(ParticlePresets::createExplosion());
+    smokeEmitter->setPosition(glm::vec3(0.0f, 1.0f, 0.0f));
+    particleEmitters.push_back(std::move(smokeEmitter));
+
+    // // Snow falling from above
+    auto snowEmitter = std::make_unique<ParticleEmitter>(ParticlePresets::createSnow());
+    particleEmitters.push_back(std::move(snowEmitter));
+}
+Camera camera(glm::vec3(0.0f, 0.0f, 10.0f));
+
+// Add this function to handle particle input (optional)
+void handleParticleInput(GLFWwindow *window) {
+    static bool spacePressed = false;
+
+    // Trigger explosion on spacebar
+    if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS && !spacePressed) {
+        auto explosionEmitter = std::make_unique<ParticleEmitter>(ParticlePresets::createExplosion());
+        explosionEmitter->setPosition(camera.Position + camera.Front * 2.0f);
+        particleEmitters.push_back(std::move(explosionEmitter));
+        spacePressed = true;
+    }
+    if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_RELEASE) {
+        spacePressed = false;
+    }
+
+    // Trigger sparks on 'F' key
+    static bool fPressed = false;
+    if (glfwGetKey(window, GLFW_KEY_F) == GLFW_PRESS && !fPressed) {
+        auto sparksEmitter = std::make_unique<ParticleEmitter>(ParticlePresets::createSparks());
+        sparksEmitter->setPosition(camera.Position + camera.Front * 3.0f);
+        particleEmitters.push_back(std::move(sparksEmitter));
+        fPressed = true;
+    }
+    if (glfwGetKey(window, GLFW_KEY_F) == GLFW_RELEASE) {
+        fPressed = false;
+    }
+}
 
 void fps_counter_init();
 void fps_counter_update();
@@ -33,6 +88,9 @@ void fps_counter_update();
 static double last_log_time = 0.0;
 static int frame_count = 0;
 static const double LOG_INTERVAL = 3.0; // seconds
+
+
+
 
 void fps_counter_init() {
     last_log_time = glfwGetTime();
@@ -65,7 +123,7 @@ struct Scene
 const unsigned int SCR_WIDTH = 1200;
 const unsigned int SCR_HEIGHT = 800;
 
-Camera camera(glm::vec3(0.0f, 0.0f, 10.0f));
+
 float lastX = SCR_WIDTH / 2.0f;
 float lastY = SCR_HEIGHT / 2.0f;
 bool firstMouse = true;
@@ -185,6 +243,9 @@ int main()
     // Configure global OpenGL state
     glEnable(GL_DEPTH_TEST);
 
+    glEnable(GL_BLEND);  // Add this for particle transparency
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);  // Standard alpha blending
+
     auto ID = Shader::create("vertex.glsl", "fragment.glsl");
 
     Model ourModel = load_model("ford/scene.gltf");
@@ -194,6 +255,8 @@ int main()
 
     Shader::use(ID);
     setupLighting(ID);
+       setupParticleSystem();
+    // ParticleEmitter emitter = ParticleEmitter(ParticlePresets::createFire());
 
     fps_counter_init();
     // Render loop
@@ -204,6 +267,7 @@ int main()
         lastFrame = currentFrame;
 
         processInput(window);
+          handleParticleInput(window);  // Add this line
 
         glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -231,14 +295,26 @@ int main()
        // }
 
 
-        if(isAABBInFrustum(ourModel.aabb, camera.ViewFrustum))
-        {
-            drawModel(ID, &ourModel, 1);
+        // if(isAABBInFrustum(ourModel.aabb, camera.ViewFrustum))
+        // {
+            // drawModel(ID, &ourModel, 1);
 
-            std::cout << "YES " << std::endl;
-        } else {
-            std::cout << "NO " << std::endl;
-        }
+            // std::cout << "YES " << std::endl;
+        // } else {
+        //     std::cout << "NO " << std::endl;
+        // }
+
+        for (auto it = particleEmitters.begin(); it != particleEmitters.end();) {
+                    (*it)->update(deltaTime);
+
+                    // Remove dead emitters (non-looping ones that have finished)
+                    if (!(*it)->isAlive()) {
+                        it = particleEmitters.erase(it);
+                    } else {
+                        (*it)->render(particleShader, view, projection);
+                        ++it;
+                    }
+                }
 
 
 
