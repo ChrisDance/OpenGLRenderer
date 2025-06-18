@@ -55,11 +55,6 @@ struct Material {
   uint32_t metallic_texture = 0;
 
   // Helper methods
-  void updateTextureFlags() {
-    hasDiffuseTexture = (diffuse_texture != 0) ? 1 : 0;
-    hasSpecularTexture = (specular_texture != 0) ? 1 : 0;
-    hasNormalMap = (normal_texture != 0) ? 1 : 0;
-  }
 
   size_t gpuSize() { return offsetof(Material, diffuse_texture); }
 };
