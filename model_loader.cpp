@@ -100,9 +100,9 @@ static Material processMaterial(aiMaterial *aiMat, const std::string &directory,
     material.metallic = 0.0f; // Default non-metallic
   }
 
-  material.hasDiffuseTexture = (diffuse_texture != 0) ? 1 : 0;
-  material.hasSpecularTexture = (specular_texture != 0) ? 1 : 0;
-  material.hasNormalMap = (normal_texture != 0) ? 1 : 0;
+  material.hasDiffuseTexture = (material.diffuse_texture != 0) ? 1 : 0;
+  material.hasSpecularTexture = (material.specular_texture != 0) ? 1 : 0;
+  material.hasNormalMap = (material.normal_texture != 0) ? 1 : 0;
 
   return material;
 }
