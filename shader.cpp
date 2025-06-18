@@ -1,4 +1,5 @@
 #include "shader.hpp"
+#define INVALID_UNIFORM_LOCATION 0xffffffff
 
 static void checkCompileErrors(unsigned int shader, std::string type)
 {
@@ -75,6 +76,34 @@ void Shader::setVec3(const std::string &name, unsigned int ID, const glm::vec3 &
 void Shader::setMat4(const std::string &name, unsigned int ID, const glm::mat4 &mat)
 {
     glUniformMatrix4fv(glGetUniformLocation(ID, name.c_str()), 1, GL_FALSE, &mat[0][0]);
+}
+
+void Shader::setUniformBuffer(const char* blockName, unsigned int ID, const void* data, ssize_t size,  int bindingPoint ) {
+    GLuint blockIndex = glGetUniformBlockIndex(ID, blockName);
+    if (blockIndex == GL_INVALID_INDEX) {
+        std::cerr << "Uniform block '" << blockName << "' not found" << std::endl;
+        return;
+    }
+
+    static GLuint ubo = 0;
+    if (ubo == 0) glGenBuffers(1, &ubo);
+
+    glBindBuffer(GL_UNIFORM_BUFFER, ubo);
+    glBufferData(GL_UNIFORM_BUFFER, size, &data, GL_DYNAMIC_DRAW);
+    glBindBufferBase(GL_UNIFORM_BUFFER, bindingPoint, ubo);
+    glUniformBlockBinding(ID, blockIndex, bindingPoint);
+}
+
+GLint Shader::GetUniformLocation(unsigned int shader, const char *pUniformName)
+{
+    GLuint Location = glGetUniformLocation(shader, pUniformName);
+
+    if (Location == INVALID_UNIFORM_LOCATION)
+    {
+        fprintf(stderr, "Warning! Unable to get the location of uniform '%s'\n", pUniformName);
+    }
+
+    return Location;
 }
 
 unsigned int Shader::create(const char *vPath, const char *fPath)

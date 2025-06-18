@@ -1,57 +1,60 @@
 #include "model_setup.hpp"
 
-static void bindMaterial(const Material &material, unsigned int shader)
+static void bindMaterial(Material &material, unsigned int shader)
 {
-    int textureUnit = 0;
+    Shader::setUniformBuffer("MaterialData", shader, &material, material.gpuSize(), 1);
 
-    // Bind diffuse texture
-    if (material.diffuse_texture != 0)
-    {
-        glActiveTexture(GL_TEXTURE0 + textureUnit);
-        glBindTexture(GL_TEXTURE_2D, material.diffuse_texture);
-        Shader::setInt("material.diffuse", shader, textureUnit);
-        Shader::setBool("material.hasDiffuseTexture", shader, true);
-        textureUnit++;
-    }
-    else
-    {
-        Shader::setBool("material.hasDiffuseTexture", shader, false);
-    }
 
-    // Bind specular texture
-    if (material.specular_texture != 0)
-    {
-        glActiveTexture(GL_TEXTURE0 + textureUnit);
-        glBindTexture(GL_TEXTURE_2D, material.specular_texture);
-        Shader::setInt("material.specular", shader, textureUnit);
-        Shader::setBool("material.hasSpecularTexture", shader, true);
-        textureUnit++;
-    }
-    else
-    {
-        Shader::setBool("material.hasSpecularTexture", shader, false);
-    }
+    // /*-------------- */
+    // int textureUnit = 0;
+    // // Bind diffuse texture
+    // if (material.diffuse_texture != 0)
+    // {
+    //     glActiveTexture(GL_TEXTURE0 + textureUnit);
+    //     glBindTexture(GL_TEXTURE_2D, material.diffuse_texture);
+    //     Shader::setInt("material.diffuse", shader, textureUnit);
+    //     Shader::setBool("material.hasDiffuseTexture", shader, true);
+    //     textureUnit++;
+    // }
+    // else
+    // {
+    //     Shader::setBool("material.hasDiffuseTexture", shader, false);
+    // }
 
-    // Bind normal texture
-    if (material.normal_texture != 0)
-    {
-        glActiveTexture(GL_TEXTURE0 + textureUnit);
-        glBindTexture(GL_TEXTURE_2D, material.normal_texture);
-        Shader::setInt("material.normalMap", shader, textureUnit);
-        Shader::setBool("material.hasNormalMap", shader, true);
-        textureUnit++;
-    }
-    else
-    {
-        Shader::setBool("material.hasNormalMap", shader, false);
-    }
+    // // Bind specular texture
+    // if (material.specular_texture != 0)
+    // {
+    //     glActiveTexture(GL_TEXTURE0 + textureUnit);
+    //     glBindTexture(GL_TEXTURE_2D, material.specular_texture);
+    //     Shader::setInt("material.specular", shader, textureUnit);
+    //     Shader::setBool("material.hasSpecularTexture", shader, true);
+    //     textureUnit++;
+    // }
+    // else
+    // {
+    //     Shader::setBool("material.hasSpecularTexture", shader, false);
+    // }
 
-    // Set material properties
-    Shader::setVec3("material.diffuseColor", shader, material.diffuse_color);
-    Shader::setVec3("material.specularColor", shader, material.specular_color);
-    Shader::setFloat("material.roughness", shader, material.roughness);
-    Shader::setFloat("material.metallic", shader, material.metallic);
-    Shader::setFloat("material.shininess", shader, material.shininess);
+    // // Bind normal texture
+    // if (material.normal_texture != 0)
+    // {
+    //     glActiveTexture(GL_TEXTURE0 + textureUnit);
+    //     glBindTexture(GL_TEXTURE_2D, material.normal_texture);
+    //     Shader::setInt("material.normalMap", shader, textureUnit);
+    //     Shader::setBool("material.hasNormalMap", shader, true);
+    //     textureUnit++;
+    // }
+    // else
+    // {
+    //     Shader::setBool("material.hasNormalMap", shader, false);
+    // }
+
+    // // Set material properties
+    // Shader::setVec3("material.diffuseColor", shader, material.diffuse_color);
+    // Shader::setVec3("material.specularColor", shader, material.specular_color);
+    // Shader::setFloat("material.roughness", shader, material.roughness);
+    // Shader::setFloat("material.metallic", shader, material.metallic);
+    // Shader::setFloat("material.shininess", shader, material.shininess);
 }
 static void unloadMesh(Mesh *mesh)
 {
@@ -129,11 +132,8 @@ void uploadInstanceData(Model *model, std::vector<glm::mat4> instances)
     glBufferSubData(GL_ARRAY_BUFFER, 0, dataSize, instances.data());
 }
 
-void drawModel(unsigned int shader, Model *model, std::vector<glm::mat4> &instances)
-{
-    // if(visibleInstances.empty()) return;
-
-    uint32_t instanceCount = static_cast<uint32_t>(instances.size());
+void drawModel(unsigned int shader, Model *model, unsigned int instanceCount)
+{ // if(visibleInstances.empty()) return;
 
     // Shader::use(shader); // should already be in use
 

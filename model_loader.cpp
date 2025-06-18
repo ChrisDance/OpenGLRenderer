@@ -1,11 +1,6 @@
 
 #include "model_loader.hpp"
 
-static Material createMaterialFromTextures(const std::vector<Texture> &textures)
-{
-    Material material = {0};
-}
-
 // Helper function to load a single texture with duplicate checking
 static unsigned int loadTexture(const char *path, const std::string &directory,
                                 std::vector<Texture> &textures_loaded)
@@ -133,8 +128,9 @@ static Material processMaterial(aiMaterial *aiMat, const std::string &directory,
 static Mesh processMesh(aiMesh *mesh, const aiScene *scene, std::string &directory, std::vector<Texture> &textures_loaded, std::vector<Material> &materials)
 {
     std::vector<Vertex> vertices;
+    vertices.reserve(mesh->mNumVertices);
+
     std::vector<unsigned int> indices;
-    std::vector<Texture> textures;
 
     for (unsigned int i = 0; i < mesh->mNumVertices; i++)
     {

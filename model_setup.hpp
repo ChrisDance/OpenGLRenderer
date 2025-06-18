@@ -17,6 +17,6 @@
 #include <sstream>
 #include <memory>
 
-void drawModel(unsigned int shader, Model *model, std::vector<glm::mat4> &instances);
+void drawModel(unsigned int shader, Model *model, unsigned int instanceCount);
 void uploadInstanceData(Model *model, std::vector<glm::mat4> instances);
 void setupModel(Model *model, int maxInstances);

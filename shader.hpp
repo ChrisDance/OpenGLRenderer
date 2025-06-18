@@ -20,5 +20,7 @@ namespace Shader
     void setFloat(const std::string &name, unsigned int ID, float value);
     void setVec3(const std::string &name, unsigned int ID, const glm::vec3 &value);
     void setMat4(const std::string &name, unsigned int ID, const glm::mat4 &mat);
+    void setUniformBuffer(const char* blockName, unsigned int ID, const void* data, ssize_t size,  int bindingPoint = 0);
+    GLint GetUniformLocation(unsigned int shader, const char *pUniformName);
 
 };

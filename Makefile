@@ -3,13 +3,13 @@ CXX = clang++
 CC = clang
 
 # Project name
-TARGET = bin 
+TARGET = bin
 
 # Source directories
 
 
 # Source files - automatically find all .cpp and .c files
-CPP_SOURCES = $(wildcard *.cpp) 
+CPP_SOURCES = $(wildcard *.cpp)
 C_SOURCES = $(wildcard *.c)
 
 # Object files
@@ -31,8 +31,8 @@ LIB_DIRS = -L$(BREW_PREFIX)/lib
 LIBS = -lglfw -lfreetype -framework OpenGL -framework Cocoa -framework IOKit -framework CoreVideo -lassimp
 
 # Compiler flags - Added GL_SILENCE_DEPRECATION to prevent OpenGL deprecation conflicts
-CXXFLAGS = -std=c++17 -Wall -Wextra -O0 $(INCLUDES) -g -DGL_SILENCE_DEPRECATION
-CFLAGS = -std=c99 -Wall -Wextra -O0 $(INCLUDES) -DGL_SILENCE_DEPRECATION
+CXXFLAGS = -std=c++17 -Wall -O0 $(INCLUDES) -g -DGL_SILENCE_DEPRECATION
+CFLAGS = -std=c99 -Wall -O0 $(INCLUDES) -DGL_SILENCE_DEPRECATION
 
 # Linker flags
 LDFLAGS = $(LIB_DIRS) $(LIBS)
