@@ -86,26 +86,21 @@ void Shader::setUniformBuffer(const char* blockName, unsigned int ID, const void
         return;
     }
 
-    // Use a static map to track UBOs per binding point to avoid recreating
     static std::map<int, GLuint> ubos;
 
     if (ubos.find(bindingPoint) == ubos.end()) {
         glGenBuffers(1, &ubos[bindingPoint]);
+        glBindBuffer(GL_UNIFORM_BUFFER, ubos[bindingPoint]);
+        glBufferData(GL_UNIFORM_BUFFER, size, nullptr, GL_DYNAMIC_DRAW);
     }
 
     GLuint ubo = ubos[bindingPoint];
-
     glBindBuffer(GL_UNIFORM_BUFFER, ubo);
-    glBufferData(GL_UNIFORM_BUFFER, size, data, GL_DYNAMIC_DRAW); // Fixed: removed & from data
-    glBindBufferBase(GL_UNIFORM_BUFFER, bindingPoint, ubo);
+    glBufferSubData(GL_UNIFORM_BUFFER, 0, size, data);  // Use SubData instead of Data
     glUniformBlockBinding(ID, blockIndex, bindingPoint);
-
-    // Add error checking
-    GLenum error = glGetError();
-    if (error != GL_NO_ERROR) {
-        std::cerr << "OpenGL error in setUniformBuffer: " << error << std::endl;
-    }
+    glBindBufferBase(GL_UNIFORM_BUFFER, bindingPoint, ubo);
 }
+
 
 GLint Shader::GetUniformLocation(unsigned int shader, const char *pUniformName)
 {

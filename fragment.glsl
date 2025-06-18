@@ -24,20 +24,23 @@ layout(std140) uniform LightingData {
 };
 // Uniform buffer for material properties
 layout(std140) uniform MaterialData {
-    vec3 diffuseColor;
-    vec3 specularColor;
-    float roughness;
-    float metallic;
-    float shininess;
-    int hasDiffuseTexture; // Changed from bool to int
-    int hasSpecularTexture; // Changed from bool to int
-    int hasNormalMap; // Changed from bool to int
+    vec3 diffuseColor; // 16 bytes
+    vec3 specularColor; // 16 bytes
+    float roughness; // 4 bytes
+    float metallic; // 4 bytes
+    float alpha; // 4 bytes
+    float shininess; // 4 bytes (total 16 bytes for this group)
+    int hasDiffuseTexture; // 4 bytes
+    int hasSpecularTexture; // 4 bytes
+    int hasNormalMap; // 4 bytes
+    float _pad3; // 4 bytes (total 16 bytes for this group)
 };
 uniform vec3 viewPos;
 // Samplers as regular uniforms
 uniform sampler2D material_diffuse;
 uniform sampler2D material_specular;
 uniform sampler2D material_normalMap;
+
 vec3 calculatePointLight(PointLight light, vec3 fragPos, vec3 normal, vec3 viewDir, vec3 materialDiffuse)
 {
     vec3 lightDir = normalize(light.position - fragPos);

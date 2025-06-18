@@ -1,45 +1,53 @@
 #include "model_setup.hpp"
 
+// Create a default white texture (call this once during initialization)
+static unsigned int createDefaultTexture() {
+    unsigned int textureID;
+    glGenTextures(1, &textureID);
+    glBindTexture(GL_TEXTURE_2D, textureID);
+
+    unsigned char whitePixel[] = {255, 255, 255, 255};
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 1, 1, 0, GL_RGBA, GL_UNSIGNED_BYTE, whitePixel);
+
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+    return textureID;
+}
+
+static unsigned int defaultTexture = 0; // Initialize this once in your setup
+
 static void bindMaterial(Material &material, unsigned int shader)
 {
+    if (defaultTexture == 0) {
+        defaultTexture = createDefaultTexture();
+    }
+    if(material.diffuse_texture == 0)
+    {
+        material.hasDiffuseTexture = 0;
+        // material.diffuse_color = glm::vec4(1.0f, 0.0f, 1.0f, 1.0f);
+    }
     Shader::setUniformBuffer("MaterialData", shader, &material, material.gpuSize(), 1);
 
-    int textureUnit = 0;
+    // Always set sampler uniforms to known texture units
+    Shader::setInt("material_diffuse", shader, 0);
+    Shader::setInt("material_specular", shader, 1);
+    Shader::setInt("material_normalMap", shader, 2);
 
-    // Bind diffuse texture
-    if (material.diffuse_texture != 0)
-    {
-        glActiveTexture(GL_TEXTURE0 + textureUnit);
-        glBindTexture(GL_TEXTURE_2D, material.diffuse_texture);
-        Shader::setInt("material_diffuse", shader, textureUnit);
-        textureUnit++;
-    }
+    // Bind diffuse texture or default
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, material.diffuse_texture != 0 ? material.diffuse_texture : defaultTexture);
 
-    // Bind specular texture
-    if (material.specular_texture != 0)
-    {
-        glActiveTexture(GL_TEXTURE0 + textureUnit);
-        glBindTexture(GL_TEXTURE_2D, material.specular_texture);
-        Shader::setInt("material_specular", shader, textureUnit);
-        textureUnit++;
-    }
+    // Bind specular texture or default
+    glActiveTexture(GL_TEXTURE1);
+    glBindTexture(GL_TEXTURE_2D, material.specular_texture != 0 ? material.specular_texture : defaultTexture);
 
-    // Bind normal texture
-    if (material.normal_texture != 0)
-    {
-        glActiveTexture(GL_TEXTURE0 + textureUnit);
-        glBindTexture(GL_TEXTURE_2D, material.normal_texture);
-        Shader::setInt("material_normalMap", shader, textureUnit);
-        textureUnit++;
-    }
+    // Bind normal texture or default
+    glActiveTexture(GL_TEXTURE2);
+    glBindTexture(GL_TEXTURE_2D, material.normal_texture != 0 ? material.normal_texture : defaultTexture);
 }
 
-static void unloadMesh(Mesh *mesh)
-{
-    glDeleteBuffers(1, &mesh->VBO);
-    glDeleteBuffers(1, &mesh->EBO);
-    glDeleteVertexArrays(1, &mesh->VAO);
-}
+
 
 static void setupMesh(Mesh *mesh)
 {
