@@ -86,9 +86,11 @@ void add_instance(Model &m, glm::vec3 trans, float scale, glm::vec3 rot = glm::v
     std::vector<glm::mat4> instances;
     glm::mat4 model = glm::mat4(1.0f);
 
-    model = glm::rotate(model, (float)M_PI, rot);
     model = glm::translate(model, trans);
+    model = glm::rotate(model, (float)M_PI, rot);
     model = glm::scale(model, glm::vec3(scale));
+
+    ourModel.aabb.transform(model);
 
     instances.push_back(model);
 
@@ -96,7 +98,7 @@ void add_instance(Model &m, glm::vec3 trans, float scale, glm::vec3 rot = glm::v
 }
 void setupLighting(unsigned int shaderID) {
     // Directional light
-    Shader::setVec3("directLight.Direction", shaderID, glm::vec3(-0.2f, -1.0f, -0.3f));
+    Shader::setVec3("directLight.Direction", shaderID, glm::vec3(-1.0f, 0.0f, -0.0f));
     Shader::setVec3("directLight.Intensity", shaderID, glm::vec3(0.5f, 0.5f, 0.5f));
     Shader::setVec3("directLight.Color", shaderID, glm::vec3(1.0f, 1.0f, 1.0f));
 
@@ -118,6 +120,27 @@ void setupLighting(unsigned int shaderID) {
     Shader::setFloat("pointLights[1].quadratic", shaderID, 0.032f);
 }
 
+inline bool isAABBOutsidePlane(const AABB& aabb, const glm::vec4& plane) {
+    // Get the positive vertex (farthest point in the direction of the plane normal)
+    glm::vec3 positiveVertex;
+    positiveVertex.x = (plane.x >= 0.0f) ? aabb.max.x : aabb.min.x;
+    positiveVertex.y = (plane.y >= 0.0f) ? aabb.max.y : aabb.min.y;
+    positiveVertex.z = (plane.z >= 0.0f) ? aabb.max.z : aabb.min.z;
+
+    // If the positive vertex is behind the plane, the entire AABB is outside
+    return (glm::dot(glm::vec3(plane), positiveVertex) + plane.w) < 0.0f;
+}
+
+// Test if AABB is within or intersects the frustum
+bool isAABBInFrustum(const AABB& aabb, const Frustum& frustum) {
+    // Test against all 6 frustum planes
+    for (int i = 0; i < 6; i++) {
+        if (isAABBOutsidePlane(aabb, frustum.planes[i])) {
+            return false; // AABB is completely outside this plane
+        }
+    }
+    return true; // AABB is inside or intersects the frustum
+}
 
 
 int main()
@@ -190,11 +213,21 @@ int main()
         Shader::setMat4("projection", ID, projection);
         Shader::setMat4("view", ID, view);
         Shader::setVec3("viewPos", ID, camera.Position);
+        
+
+
+        camera.CalculateFrustum(projection, view);
+        if(isAABBInFrustum(ourModel.aabb, camera.ViewFrustum))
+        {
+            drawModel(ID, &ourModel, 1);
+        } else {
+            std::cout << "Model is not in view frustum" << std::endl;
+        }
 
 
 
 
-        drawModel(ID, &ourModel, 1);
+
 
         glfwSwapBuffers(window);
         fps_counter_update();

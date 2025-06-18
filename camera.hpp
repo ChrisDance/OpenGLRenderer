@@ -42,70 +42,48 @@ public:
         Pitch = pitch;
         updateCameraVectors();
     }
-
     void CalculateFrustum(const glm::mat4& projection, const glm::mat4& view)
     {
         glm::mat4 clipMatrix = projection * view;
 
-        // Extract frustum planes from clip matrix
-        // Left plane
-        ViewFrustum.planes[Frustum::LEFT] = glm::vec4(
-            clipMatrix[0][3] + clipMatrix[0][0],
-            clipMatrix[1][3] + clipMatrix[1][0],
-            clipMatrix[2][3] + clipMatrix[2][0],
-            clipMatrix[3][3] + clipMatrix[3][0]
-        );
+        // Access matrix elements directly - GLM matrices are column-major
+        // clipMatrix[col][row] or use clipMatrix[col * 4 + row] for direct access
 
-        // Right plane
-        ViewFrustum.planes[Frustum::RIGHT] = glm::vec4(
-            clipMatrix[0][3] - clipMatrix[0][0],
-            clipMatrix[1][3] - clipMatrix[1][0],
-            clipMatrix[2][3] - clipMatrix[2][0],
-            clipMatrix[3][3] - clipMatrix[3][0]
-        );
+        float m00 = clipMatrix[0][0], m01 = clipMatrix[0][1], m02 = clipMatrix[0][2], m03 = clipMatrix[0][3];
+        float m10 = clipMatrix[1][0], m11 = clipMatrix[1][1], m12 = clipMatrix[1][2], m13 = clipMatrix[1][3];
+        float m20 = clipMatrix[2][0], m21 = clipMatrix[2][1], m22 = clipMatrix[2][2], m23 = clipMatrix[2][3];
+        float m30 = clipMatrix[3][0], m31 = clipMatrix[3][1], m32 = clipMatrix[3][2], m33 = clipMatrix[3][3];
 
-        // Bottom plane
-        ViewFrustum.planes[Frustum::BOTTOM] = glm::vec4(
-            clipMatrix[0][3] + clipMatrix[0][1],
-            clipMatrix[1][3] + clipMatrix[1][1],
-            clipMatrix[2][3] + clipMatrix[2][1],
-            clipMatrix[3][3] + clipMatrix[3][1]
-        );
+        // Left plane: w + x >= 0
+        ViewFrustum.planes[Frustum::LEFT] = glm::vec4(m30 + m00, m31 + m01, m32 + m02, m33 + m03);
 
-        // Top plane
-        ViewFrustum.planes[Frustum::TOP] = glm::vec4(
-            clipMatrix[0][3] - clipMatrix[0][1],
-            clipMatrix[1][3] - clipMatrix[1][1],
-            clipMatrix[2][3] - clipMatrix[2][1],
-            clipMatrix[3][3] - clipMatrix[3][1]
-        );
+        // Right plane: w - x >= 0
+        ViewFrustum.planes[Frustum::RIGHT] = glm::vec4(m30 - m00, m31 - m01, m32 - m02, m33 - m03);
 
-        // Near plane
-        ViewFrustum.planes[Frustum::NEAR_PLANE] = glm::vec4(
-            clipMatrix[0][3] + clipMatrix[0][2],
-            clipMatrix[1][3] + clipMatrix[1][2],
-            clipMatrix[2][3] + clipMatrix[2][2],
-            clipMatrix[3][3] + clipMatrix[3][2]
-        );
+        // Bottom plane: w + y >= 0
+        ViewFrustum.planes[Frustum::BOTTOM] = glm::vec4(m30 + m10, m31 + m11, m32 + m12, m33 + m13);
 
-        // Far plane
-        ViewFrustum.planes[Frustum::FAR_PLANE] = glm::vec4(
-            clipMatrix[0][3] - clipMatrix[0][2],
-            clipMatrix[1][3] - clipMatrix[1][2],
-            clipMatrix[2][3] - clipMatrix[2][2],
-            clipMatrix[3][3] - clipMatrix[3][2]
-        );
+        // Top plane: w - y >= 0
+        ViewFrustum.planes[Frustum::TOP] = glm::vec4(m30 - m10, m31 - m11, m32 - m12, m33 - m13);
+
+        // Near plane: w + z >= 0
+        ViewFrustum.planes[Frustum::NEAR_PLANE] = glm::vec4(m30 + m20, m31 + m21, m32 + m22, m33 + m23);
+
+        // Far plane: w - z >= 0
+        ViewFrustum.planes[Frustum::FAR_PLANE] = glm::vec4(m30 - m20, m31 - m21, m32 - m22, m33 - m23);
 
         // Normalize all planes
         for (int i = 0; i < 6; i++) {
             float length = glm::length(glm::vec3(ViewFrustum.planes[i]));
-            ViewFrustum.planes[i] /= length;
+            if (length > 0.0001f) {
+                ViewFrustum.planes[i] /= length;
+            }
         }
     }
-    
-    
-    
-    
+
+
+
+
 
     glm::mat4 GetViewMatrix()
     {

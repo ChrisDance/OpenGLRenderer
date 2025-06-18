@@ -19,6 +19,80 @@
 
 #define MAX_LIGHTS 32
 
+
+struct AABB {
+    glm::vec3 min;
+    glm::vec3 max;
+
+    AABB() : min(FLT_MAX), max(-FLT_MAX) {}
+
+    AABB(const glm::vec3& minPoint, const glm::vec3& maxPoint)
+        : min(minPoint), max(maxPoint) {}
+
+    // Expand AABB to include a point
+    void expand(const glm::vec3& point) {
+        min = glm::min(min, point);
+        max = glm::max(max, point);
+    }
+
+    // Expand AABB to include another AABB
+    void expand(const AABB& other) {
+        min = glm::min(min, other.min);
+        max = glm::max(max, other.max);
+    }
+
+    // Get center point
+    glm::vec3 getCenter() const {
+        return (min + max) * 0.5f;
+    }
+
+    // Get size (dimensions)
+    glm::vec3 getSize() const {
+        return max - min;
+    }
+
+    // Get all 8 corners of the AABB
+    std::vector<glm::vec3> getCorners() const {
+        return {
+            glm::vec3(min.x, min.y, min.z),
+            glm::vec3(max.x, min.y, min.z),
+            glm::vec3(min.x, max.y, min.z),
+            glm::vec3(max.x, max.y, min.z),
+            glm::vec3(min.x, min.y, max.z),
+            glm::vec3(max.x, min.y, max.z),
+            glm::vec3(min.x, max.y, max.z),
+            glm::vec3(max.x, max.y, max.z)
+        };
+    }
+
+    // Transform AABB by a matrix
+    AABB transform(const glm::mat4& matrix) const {
+        auto corners = getCorners();
+        AABB result;
+
+        for (const auto& corner : corners) {
+            glm::vec4 transformedCorner = matrix * glm::vec4(corner, 1.0f);
+            result.expand(glm::vec3(transformedCorner));
+        }
+
+        return result;
+    }
+
+    // Check if point is inside AABB
+    bool contains(const glm::vec3& point) const {
+        return point.x >= min.x && point.x <= max.x &&
+               point.y >= min.y && point.y <= max.y &&
+               point.z >= min.z && point.z <= max.z;
+    }
+
+    // Check if two AABBs intersect
+    bool intersects(const AABB& other) const {
+        return min.x <= other.max.x && max.x >= other.min.x &&
+               min.y <= other.max.y && max.y >= other.min.y &&
+               min.z <= other.max.z && max.z >= other.min.z;
+    }
+};
+
 struct Vertex {
   glm::vec3 Position;
   glm::vec3 Normal;
@@ -54,7 +128,6 @@ struct Material {
   uint32_t roughness_texture = 0;
   uint32_t metallic_texture = 0;
 
-
 };
 
 struct Mesh {
@@ -69,6 +142,8 @@ struct Model {
   std::vector<Mesh> meshes;
   std::vector<Material> materials;
   GLuint IVBO; /*instancing*/
+  AABB aabb;
+
                // unsigned int maxInstances{0};
 };
 struct PointLight {

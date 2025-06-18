@@ -217,6 +217,27 @@ processNode(aiNode *node, const aiScene *scene, std::string &directory,
                     materials);
     }
 }
+
+AABB calculateMeshAABB(const std::vector<Vertex>& vertices) {
+    AABB aabb;
+
+    for (const auto& vertex : vertices) {
+        aabb.expand(vertex.Position);
+    }
+
+    return aabb;
+}
+
+AABB calculateModelAABB(const Model& model) {
+    AABB modelAABB;
+
+    for (const auto& mesh : model.meshes) {
+        AABB meshAABB = calculateMeshAABB(mesh.vertices);
+        modelAABB.expand(meshAABB);
+    }
+
+    return modelAABB;
+}
 Model load_model(std::string path)
 {
     Assimp::Importer importer;
@@ -240,6 +261,8 @@ Model load_model(std::string path)
 
     processNode(scene->mRootNode, scene, directory, textures_loaded, model.meshes,
                 model.materials);
+
+    model.aabb= calculateModelAABB(model);
 
     return model;
 }
