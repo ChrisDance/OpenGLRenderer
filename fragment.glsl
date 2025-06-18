@@ -29,7 +29,7 @@ layout (std140) uniform LightingData {
     vec3 viewPos;
 };
 
-// Uniform buffer for material properties (non-sampler data)
+// Uniform buffer for material properties
 layout (std140) uniform MaterialData {
     vec3 diffuseColor;
     vec3 specularColor;
@@ -41,27 +41,25 @@ layout (std140) uniform MaterialData {
     bool hasNormalMap;
 };
 
-// Samplers must remain as regular uniforms (can't be in uniform blocks)
+// Samplers as regular uniforms
 uniform sampler2D material_diffuse;
 uniform sampler2D material_specular;
 uniform sampler2D material_normalMap;
 
-vec3 calculatePointLight(PointLight light, vec3 fragPos, vec3 normal, vec3 viewDir)
+vec3 calculatePointLight(PointLight light, vec3 fragPos, vec3 normal, vec3 viewDir, vec3 materialDiffuse)
 {
     vec3 lightDir = normalize(light.position - fragPos);
-    // Calculate distance for attenuation
     float distance = length(light.position - fragPos);
     float attenuation = 1.0 / (light.constant + light.linear * distance + light.quadratic * (distance * distance));
 
     // Diffuse shading
     float diff = max(dot(normal, lightDir), 0.0);
-    vec3 diffuse = diff * light.color;
+    vec3 diffuse = diff * light.color * materialDiffuse;
 
-    // Specular shading (Blinn-Phong)
+    // Specular shading
     vec3 halfwayDir = normalize(lightDir + viewDir);
     float spec = pow(max(dot(normal, halfwayDir), 0.0), shininess);
 
-    // Sample specular map if available, otherwise use material color
     vec3 specularValue;
     if (hasSpecularTexture) {
         specularValue = texture(material_specular, TexCoord).rgb;
@@ -70,36 +68,35 @@ vec3 calculatePointLight(PointLight light, vec3 fragPos, vec3 normal, vec3 viewD
     }
     vec3 specular = spec * light.color * specularValue;
 
-    // Combine results with attenuation
     return (diffuse + specular) * attenuation;
+}
+
+vec3 calculateDirectionalLight(DirectionalLight light, vec3 normal, vec3 viewDir, vec3 materialDiffuse)
+{
+    vec3 lightDir = normalize(-light.Direction);
+
+    // Diffuse shading
+    float diff = max(dot(normal, lightDir), 0.0);
+    vec3 diffuse = diff * light.Color * light.Intensity * materialDiffuse;
+
+    // Specular shading
+    vec3 halfwayDir = normalize(lightDir + viewDir);
+    float spec = pow(max(dot(normal, halfwayDir), 0.0), shininess);
+
+    vec3 specularValue;
+    if (hasSpecularTexture) {
+        specularValue = texture(material_specular, TexCoord).rgb;
+    } else {
+        specularValue = specularColor;
+    }
+    vec3 specular = spec * light.Color * light.Intensity * specularValue;
+
+    return diffuse + specular;
 }
 
 void main()
 {
-    // Ambient lighting
-    float ambientStrength = 0.1;
-    vec3 ambient = ambientStrength * vec3(1.0);
-
-    // Use normal map if available
-    vec3 norm;
-    if (hasNormalMap) {
-        // Sample normal map and transform from [0,1] to [-1,1]
-        vec3 normalMap = texture(material_normalMap, TexCoord).rgb * 2.0 - 1.0;
-        // For simplicity, just use the normal map directly (proper implementation would use TBN matrix)
-        norm = normalize(Normal + normalMap * 0.1); // Subtle normal mapping
-    } else {
-        norm = normalize(Normal);
-    }
-
-    vec3 viewDirection = normalize(viewPos - FragPos);
-    vec3 result = vec3(0.0);
-
-    // Calculate contribution from each point light
-    for(int i = 0; i < numPointLights && i < MAX_LIGHTS; i++) {
-        result += calculatePointLight(pointLights[i], FragPos, norm, viewDirection);
-    }
-
-    // Sample diffuse texture if available, otherwise use material color
+    // Sample diffuse texture if available
     vec3 materialDiffuse;
     if (hasDiffuseTexture) {
         materialDiffuse = texture(material_diffuse, TexCoord).rgb;
@@ -107,7 +104,28 @@ void main()
         materialDiffuse = diffuseColor;
     }
 
-    // Apply lighting to diffuse color
-    result = directLight.Color; //(ambient + result) * materialDiffuse;
+    // Get normal (with optional normal mapping)
+    vec3 norm;
+    if (hasNormalMap) {
+        vec3 normalMap = texture(material_normalMap, TexCoord).rgb * 2.0 - 1.0;
+        norm = normalize(Normal + normalMap * 0.1);
+    } else {
+        norm = normalize(Normal);
+    }
+
+    vec3 viewDirection = normalize(viewPos - FragPos);
+
+    // Ambient lighting
+    vec3 ambient = 0.1 * materialDiffuse;
+
+    // Directional light
+    vec3 result = calculateDirectionalLight(directLight, norm, viewDirection, materialDiffuse);
+
+    // Point lights
+    for(int i = 0; i < numPointLights && i < MAX_LIGHTS; i++) {
+        result += calculatePointLight(pointLights[i], FragPos, norm, viewDirection, materialDiffuse);
+    }
+
+    result += ambient;
     FragColor = vec4(result, 1.0);
 }

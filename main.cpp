@@ -94,17 +94,13 @@ void add_instance(Model &m, glm::vec3 trans, float scale, glm::vec3 rot = glm::v
 
     uploadInstanceData(&m, instances);
 }
-
-
-
 void setupLighting(unsigned int shaderID) {
-    // Setup lighting data
     LightingData lighting = {};
 
     // Directional light
     lighting.directLight.Direction = glm::vec3(-0.2f, -1.0f, -0.3f);
-    lighting.directLight.Intensity = glm::vec3(1.0f);
-    lighting.directLight.Color = glm::vec3(0.0f, 0.0f, 1.0f);
+    lighting.directLight.Intensity = glm::vec3(0.5f, 0.5f, 0.5f); // Reduced intensity
+    lighting.directLight.Color = glm::vec3(1.0f, 1.0f, 1.0f); // White light
 
     // Point lights
     lighting.numPointLights = 2;
@@ -121,11 +117,10 @@ void setupLighting(unsigned int shaderID) {
     lighting.pointLights[1].linear = 0.09f;
     lighting.pointLights[1].quadratic = 0.032f;
 
-    lighting.viewPos = glm::vec3(0.0f, 0.0f, 3.0f);
+    lighting.viewPos = camera.Position; // Use actual camera position
 
-    // Upload entire lighting data in one call
+    // Upload lighting data
     Shader::setUniformBuffer("LightingData", shaderID, &lighting, sizeof(lighting), 0);
-
 }
 
 

@@ -2,60 +2,43 @@
 
 static void bindMaterial(Material &material, unsigned int shader)
 {
+    // Update texture flags before uploading
+    material.updateTextureFlags();
+
+    // Upload material data to UBO
     Shader::setUniformBuffer("MaterialData", shader, &material, material.gpuSize(), 1);
 
+    // Bind textures manually (samplers can't be in UBOs)
+    int textureUnit = 0;
 
-    // /*-------------- */
-    // int textureUnit = 0;
-    // // Bind diffuse texture
-    // if (material.diffuse_texture != 0)
-    // {
-    //     glActiveTexture(GL_TEXTURE0 + textureUnit);
-    //     glBindTexture(GL_TEXTURE_2D, material.diffuse_texture);
-    //     Shader::setInt("material.diffuse", shader, textureUnit);
-    //     Shader::setBool("material.hasDiffuseTexture", shader, true);
-    //     textureUnit++;
-    // }
-    // else
-    // {
-    //     Shader::setBool("material.hasDiffuseTexture", shader, false);
-    // }
+    // Bind diffuse texture
+    if (material.diffuse_texture != 0)
+    {
+        glActiveTexture(GL_TEXTURE0 + textureUnit);
+        glBindTexture(GL_TEXTURE_2D, material.diffuse_texture);
+        Shader::setInt("material_diffuse", shader, textureUnit);
+        textureUnit++;
+    }
 
-    // // Bind specular texture
-    // if (material.specular_texture != 0)
-    // {
-    //     glActiveTexture(GL_TEXTURE0 + textureUnit);
-    //     glBindTexture(GL_TEXTURE_2D, material.specular_texture);
-    //     Shader::setInt("material.specular", shader, textureUnit);
-    //     Shader::setBool("material.hasSpecularTexture", shader, true);
-    //     textureUnit++;
-    // }
-    // else
-    // {
-    //     Shader::setBool("material.hasSpecularTexture", shader, false);
-    // }
+    // Bind specular texture
+    if (material.specular_texture != 0)
+    {
+        glActiveTexture(GL_TEXTURE0 + textureUnit);
+        glBindTexture(GL_TEXTURE_2D, material.specular_texture);
+        Shader::setInt("material_specular", shader, textureUnit);
+        textureUnit++;
+    }
 
-    // // Bind normal texture
-    // if (material.normal_texture != 0)
-    // {
-    //     glActiveTexture(GL_TEXTURE0 + textureUnit);
-    //     glBindTexture(GL_TEXTURE_2D, material.normal_texture);
-    //     Shader::setInt("material.normalMap", shader, textureUnit);
-    //     Shader::setBool("material.hasNormalMap", shader, true);
-    //     textureUnit++;
-    // }
-    // else
-    // {
-    //     Shader::setBool("material.hasNormalMap", shader, false);
-    // }
-
-    // // Set material properties
-    // Shader::setVec3("material.diffuseColor", shader, material.diffuse_color);
-    // Shader::setVec3("material.specularColor", shader, material.specular_color);
-    // Shader::setFloat("material.roughness", shader, material.roughness);
-    // Shader::setFloat("material.metallic", shader, material.metallic);
-    // Shader::setFloat("material.shininess", shader, material.shininess);
+    // Bind normal texture
+    if (material.normal_texture != 0)
+    {
+        glActiveTexture(GL_TEXTURE0 + textureUnit);
+        glBindTexture(GL_TEXTURE_2D, material.normal_texture);
+        Shader::setInt("material_normalMap", shader, textureUnit);
+        textureUnit++;
+    }
 }
+
 static void unloadMesh(Mesh *mesh)
 {
     glDeleteBuffers(1, &mesh->VBO);

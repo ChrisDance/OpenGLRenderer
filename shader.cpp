@@ -1,4 +1,5 @@
 #include "shader.hpp"
+#include <map>
 #define INVALID_UNIFORM_LOCATION 0xffffffff
 
 static void checkCompileErrors(unsigned int shader, std::string type)
@@ -78,20 +79,32 @@ void Shader::setMat4(const std::string &name, unsigned int ID, const glm::mat4 &
     glUniformMatrix4fv(glGetUniformLocation(ID, name.c_str()), 1, GL_FALSE, &mat[0][0]);
 }
 
-void Shader::setUniformBuffer(const char* blockName, unsigned int ID, const void* data, ssize_t size,  int bindingPoint ) {
+void Shader::setUniformBuffer(const char* blockName, unsigned int ID, const void* data, ssize_t size, int bindingPoint) {
     GLuint blockIndex = glGetUniformBlockIndex(ID, blockName);
     if (blockIndex == GL_INVALID_INDEX) {
         std::cerr << "Uniform block '" << blockName << "' not found" << std::endl;
         return;
     }
 
-    static GLuint ubo = 0;
-    if (ubo == 0) glGenBuffers(1, &ubo);
+    // Use a static map to track UBOs per binding point to avoid recreating
+    static std::map<int, GLuint> ubos;
+
+    if (ubos.find(bindingPoint) == ubos.end()) {
+        glGenBuffers(1, &ubos[bindingPoint]);
+    }
+
+    GLuint ubo = ubos[bindingPoint];
 
     glBindBuffer(GL_UNIFORM_BUFFER, ubo);
-    glBufferData(GL_UNIFORM_BUFFER, size, &data, GL_DYNAMIC_DRAW);
+    glBufferData(GL_UNIFORM_BUFFER, size, data, GL_DYNAMIC_DRAW); // Fixed: removed & from data
     glBindBufferBase(GL_UNIFORM_BUFFER, bindingPoint, ubo);
     glUniformBlockBinding(ID, blockIndex, bindingPoint);
+
+    // Add error checking
+    GLenum error = glGetError();
+    if (error != GL_NO_ERROR) {
+        std::cerr << "OpenGL error in setUniformBuffer: " << error << std::endl;
+    }
 }
 
 GLint Shader::GetUniformLocation(unsigned int shader, const char *pUniformName)
