@@ -159,28 +159,16 @@ int main()
     // Configure global OpenGL state
     glEnable(GL_DEPTH_TEST);
 
-    // Create shaders (you'll need to create these files)
     auto ID = Shader::create("vertex.glsl", "fragment.glsl");
 
-    // Load models (replace with your model path)
-    // Model ourModel("ford/scene.gltf", true);
-
     ourModel = load_model("ford/scene.gltf");
-    // Model m2 = load_model("snow_road/scene.gltf");
 
-    // ourModel.maxInstances = 2;
     setupModel(&ourModel, 10);
-    // setupModel(&m2, 1);
     add_instance(ourModel, glm::vec3(0), 0.01f, glm::vec3(0, 0, 1));
-    // add_instance(m2, glm::vec3(0, 0.2, 0), 0.25f, glm::vec3(1, 0, 1));
 
     Shader::use(ID);
     setupLighting(ID);
 
-    // Shader::setVec3("lightPos", ID, glm::vec3(1.2f, 100.0f, 2.0f));
-    // Shader::setVec3("viewPos", ID, camera.Position);
-    // Shader::setVec3("lightColor", ID, glm::vec3(1.0f, 1.0f, 1.0f));
-    // Shader::setVec3("objectColor", ID, glm::vec3(0.0f, 0.0f, 0.0f));
     fps_counter_init();
     // Render loop
     while (!glfwWindowShouldClose(window))
@@ -200,6 +188,7 @@ int main()
         // View/projection transformations
         glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
         glm::mat4 view = camera.GetViewMatrix();
+
         Shader::setMat4("projection", ID, projection);
         Shader::setMat4("view", ID, view);
         Shader::setVec3("viewPos", ID, camera.Position);
@@ -208,7 +197,6 @@ int main()
 
 
         drawModel(ID, &ourModel, 1);
-        // drawModel(ID, &m2, 1);
 
         glfwSwapBuffers(window);
         fps_counter_update();
@@ -221,10 +209,8 @@ int main()
 
 void processInput(GLFWwindow *window)
 {
-
     if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
         glfwSetWindowShouldClose(window, true);
-
     if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
         camera.ProcessKeyboard(0, deltaTime);
     if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)

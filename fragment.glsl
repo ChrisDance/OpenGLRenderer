@@ -120,7 +120,8 @@ void main()
     vec3 ambient = 0.1 * materialDiffuse;
 
     // Directional light
-    vec3 result = calculateDirectionalLight(directLight, norm, viewDirection, materialDiffuse);
+    vec3 result = vec3(0.0);
+    result += calculateDirectionalLight(directLight, norm, viewDirection, materialDiffuse);
 
     // Point lights
     for (int i = 0; i < numPointLights && i < MAX_LIGHTS; i++) {
