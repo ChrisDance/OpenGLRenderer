@@ -1,5 +1,6 @@
 #include "game.hpp"
 #include "camera.hpp"
+#include "collision_system.hpp"
 #include "model.hpp"
 #include "model_loader.hpp"
 #include "model_setup.hpp"
@@ -7,6 +8,8 @@
 #include "shader.hpp"
 #include <entt/entt.hpp>
 #include <iostream>
+#include "light_system.hpp"
+#include "ground_system.hpp"
 
 
 class AABBRenderer {
@@ -181,54 +184,47 @@ public:
     }
 };
 
-
-void add_instance(Model &m, glm::vec3 trans, float scale,
-                  glm::vec3 rot = glm::vec3(0)) {
-  std::vector<glm::mat4> instances;
-  glm::mat4 model = glm::mat4(1.0f);
-
-  model = glm::translate(model, trans);
-  model = glm::rotate(model, (float)M_PI, rot);
-  model = glm::scale(model, glm::vec3(scale));
-
-  //
-  m.aabb = m.aabb.transform(model);
-
-  instances.push_back(model);
-
-  uploadInstanceData(&m, instances);
-}
 Model *model;
 Model *model2;
 Model *model3;
+std::vector<Model*> models;
+std::vector<AABB*> boxes;
 void load_models() {
+
   std::vector<glm::mat4> instances;
+
   model = load_model(resources::path(resources::Models_ford));
+  models.push_back(model);
   setupModel(model, 1);
-  auto t = model->aabb.getScaleToLengthTransform(1);
+  auto t = model->aabb.getScaleToLengthTransform(5);
   model->aabb = model->aabb.transform(t);
+  boxes.push_back(&model->aabb);
+  // for(auto& aabb : model->aabbs)  {
+  //     aabb = aabb.transform(t);
+  // }
+
   instances.push_back(t);
   uploadInstanceData(model, instances);
   instances.clear();
-  model2= load_model(resources::path(resources::Models_mustang));
-  setupModel(model2, 1);
-  auto tt  = glm::translate(glm::mat4(1), glm::vec3(1, 0,0));
-  t = model2->aabb.getScaleToLengthTransform(1);
-  t = glm::rotate(t, (float)M_PI/2, glm::vec3(1, 0,0));
-  model2->aabb = model2->aabb.transform(tt * t);
-  instances.push_back(tt  * t);
-  uploadInstanceData(model2, instances);
- /*------ */
-  instances.clear();
-  model3= load_model(resources::path(resources::Models_pigeon));
-  setupModel(model3, 1);
-  auto ttt = glm::translate(glm::mat4(1), glm::vec3(2, 0,0));
-  t = model3->aabb.getScaleToLengthTransform(1);
-  // t = glm::rotate(t, (float)M_PI/2, glm::vec3(0, 0,0));
+ //  model2= load_model(resources::path(resources::Models_mustang));
+ //  setupModel(model2, 1);
+ //  auto tt  = glm::translate(glm::mat4(1), glm::vec3(1, 0,0));
+ //  t = model2->aabb.getScaleToLengthTransform(1);
+ //  t = glm::rotate(t, (float)M_PI/2, glm::vec3(1, 0,0));
+ //  model2->aabb = model2->aabb.transform(tt * t);
+ //  instances.push_back(tt  * t);
+ //  uploadInstanceData(model2, instances);
+ // /*------ */
+ //  instances.clear();
+ //  model3= load_model(resources::path(resources::Models_pigeon));
+ //  setupModel(model3, 1);
+ //  auto ttt = glm::translate(glm::mat4(1), glm::vec3(2, 0,0));
+ //  t = model3->aabb.getScaleToLengthTransform(1);
+ //  // t = glm::rotate(t, (float)M_PI/2, glm::vec3(0, 0,0));
 
-  model2->aabb = model2->aabb.transform(ttt * t);
-  instances.push_back(ttt  * t);
-  uploadInstanceData(model3, instances);
+ //  model2->aabb = model2->aabb.transform(ttt * t);
+ //  instances.push_back(ttt  * t);
+ //  uploadInstanceData(model3, instances);
 
 
 }
@@ -239,27 +235,44 @@ void game_init(GLFWwindow *window) {
     auto ID = Shader::Create(PROG, resources::path(resources::Shaders_vertex), resources::path(resources::Shaders_fragment));
     Shader::Use(ID);
    aabbRenderer = new AABBRenderer();
+   ground_system_init();
+   collision_system_init();
+
 
 }
+
+
+
+
 
 
 void game_update(float dt) {
 
     Camera&camera = entt::locator<Camera>::value();
+    // ground_system_update(dt);
+    collision_system_update(boxes);
     Meta&meta= entt::locator<Meta>::value();
     auto ID = Shader::Get(PROG);
-    Shader ::Use(ID);
+    Shader::Use(ID);
     glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), meta.WindowDimensions.x / meta.WindowDimensions.y, 0.1f, 100.0f);
     glm::mat4 view = camera.GetViewMatrix();
     Shader::SetMat4("projection", ID, projection);
     Shader::SetMat4("view", ID, view);
     Shader::SetVec3("viewPos", ID, camera.Position);
+    // for()
     drawModel(ID, model, 1);
-    drawModel(ID, model2, 1);
-    drawModel(ID, model3, 1);
 
-        aabbRenderer->drawAABB(model->aabb, projection * view);
-        aabbRenderer->drawAABB(model2->aabb, projection * view);
-        aabbRenderer->drawAABB(model3->aabb, projection * view);
+
+
+    // drawModel(ID, model2, 1);
+    // drawModel(ID, model3, 1);
+
+        // aabbRenderer->drawAABB(model->aabb, projection * view);
+
+    // for(auto& aabb : model->aabbs){
+        // aabbRenderer->drawAABB(aabb, projection * view);
+    // }
+        // aabbRenderer->drawAABB(model2->aabb, projection * view);
+        // aabbRenderer->drawAABB(model3->aabb, projection * view);
 
 }

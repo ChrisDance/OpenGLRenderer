@@ -9,6 +9,8 @@ const char* resources::path(AssetId id) {
             return "resources/models/pigeon/scene.gltf";
         case AssetId::Models_mustang:
             return "resources/models/mustang/scene.gltf";
+        case AssetId::Models_street_town:
+            return "resources/models/street_town/scene.gltf";
         case AssetId::Shaders_fragment:
             return "resources/shaders/fragment.glsl";
         case AssetId::Shaders_particle_vertex:

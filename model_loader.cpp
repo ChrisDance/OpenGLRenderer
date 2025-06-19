@@ -231,7 +231,7 @@ static AABB convertAiAABB(const aiAABB &aiAabb)
 }
 
 // Calculate AABB from Assimp scene
-static AABB calculateModelAABBFromAssimp(const aiScene *scene)
+static AABB calculateModelAABBFromAssimp(Model*model, const aiScene *scene, bool subMeshBBs)
 {
     AABB modelAABB;
 
@@ -240,12 +240,16 @@ static AABB calculateModelAABBFromAssimp(const aiScene *scene)
     {
         const aiMesh *mesh = scene->mMeshes[i];
         AABB meshAABB = convertAiAABB(mesh->mAABB);
+        if (subMeshBBs)
+        {
+            model->aabbs.push_back(meshAABB);
+        }
         modelAABB.expand(meshAABB);
     }
 
     return modelAABB;
 }
-Model * load_model(std::string path)
+Model * load_model(std::string path, bool subMeshBBs)
 {
     Assimp::Importer importer;
     Model * model = new Model();
@@ -269,7 +273,7 @@ Model * load_model(std::string path)
     processNode(scene->mRootNode, scene, directory, textures_loaded, model->meshes,
                 model->materials);
 
-    model->aabb= calculateModelAABBFromAssimp(scene);
+    model->aabb = calculateModelAABBFromAssimp(model, scene, subMeshBBs);
 
     return model;
 }

@@ -19,4 +19,5 @@
 #include <memory>
 
 
-Model * load_model(std::string path);
+
+Model * load_model(std::string path, bool subMeshBBs = false);

@@ -237,6 +237,7 @@ int main()
     // Configure global OpenGL state
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_BLEND);  // Add this for particle transparency
+    glEnable(GL_CULL_FACE);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);  // Standard alpha blending
 
 

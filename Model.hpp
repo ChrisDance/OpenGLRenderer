@@ -19,6 +19,8 @@
 #include <entt/entt.hpp>
 
 #define MAX_LIGHTS 32
+#define uint unsigned int
+
 
 extern entt::registry ecs;
 extern entt::dispatcher bus;
@@ -181,6 +183,7 @@ struct Mesh {
 struct Model {
   std::vector<Mesh> meshes;
   std::vector<Material> materials;
+  std::vector<AABB> aabbs;
   GLuint IVBO; /*instancing*/
   AABB aabb;
 
@@ -215,4 +218,9 @@ struct LightingData {
 struct Meta
 {
     glm::vec2 WindowDimensions;
+};
+
+
+struct Shaders {
+    uint MAIN;
 };

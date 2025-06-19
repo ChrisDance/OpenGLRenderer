@@ -118,6 +118,7 @@ void drawModel(
   // Shader::use(shader); // should already be in use
 
   for (size_t i = 0; i < model->meshes.size(); i++) {
+
     const Mesh &mesh = model->meshes[i];
     Material &material = model->materials[mesh.material_index];
     bindMaterial(material, shader);
@@ -132,6 +133,7 @@ void drawModel(
   glBindVertexArray(0);
 }
 
+// TODO: Can we sort meshes by material?
 void setupModel(Model *model, int maxInstances) {
   // Setup geometry for each mesh
   for (auto &mesh : model->meshes) {
