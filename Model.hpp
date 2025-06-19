@@ -1,7 +1,7 @@
 #pragma once
 #include "mygl.h"
 #include "shader.hpp"
-#include "stb_image.h"
+#include "lib/stb_image.h"
 #include "texture_utils.hpp"
 #include <assimp/Importer.hpp>
 #include <assimp/postprocess.h>
