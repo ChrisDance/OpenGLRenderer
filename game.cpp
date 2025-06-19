@@ -26,6 +26,7 @@ void load_models() {
 
   auto ent1 = ecs.create();
   ecs.emplace<Model>(ent1, model);
+    render_system_init();
   uploadInstanceData(&model, instances);
 }
 
@@ -49,7 +50,7 @@ void game_init(GLFWwindow *window) {
 
   // ground_system_init();
   collision_system_init();
-  render_system_init();
+
 }
 
 void game_update(float dt) {

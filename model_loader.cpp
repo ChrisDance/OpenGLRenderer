@@ -4,199 +4,171 @@
 
 // Helper function to load a single texture with duplicate checking
 static unsigned int loadTexture(const char *path, const std::string &directory,
-                                std::vector<Texture> &textures_loaded)
-{
+                                std::vector<Texture> &textures_loaded) {
 
-    // Check if already loaded (same logic as your current loadMaterialTextures)
-    for (const auto &texture : textures_loaded)
-    {
-        if (std::strcmp(texture.path.data(), path) == 0)
-        {
-            // std::cout << "texture id: " << texture.id << std::endl;
-            return texture.id; // Return existing texture ID
-        }
+  // Check if already loaded (same logic as your current loadMaterialTextures)
+  for (const auto &texture : textures_loaded) {
+    if (std::strcmp(texture.path.data(), path) == 0) {
+      // std::cout << "texture id: " << texture.id << std::endl;
+      return texture.id; // Return existing texture ID
     }
+  }
 
-    // Load new texture using your existing function
-    uint32_t textureID = TextureFromFile(path, directory);
+  // Load new texture using your existing function
+  uint32_t textureID = TextureFromFile(path, directory);
 
-    // Add to loaded textures cache
-    Texture texture;
-    texture.id = textureID;
-    texture.path = path;
-    textures_loaded.push_back(texture);
+  // Add to loaded textures cache
+  Texture texture;
+  texture.id = textureID;
+  texture.path = path;
+  textures_loaded.push_back(texture);
 
-
-    return textureID;
+  return textureID;
 }
 
 static Material processMaterial(aiMaterial *aiMat, const std::string &directory,
-                                std::vector<Texture> &textures_loaded)
-{
-    Material material = {};
+                                std::vector<Texture> &textures_loaded) {
+  Material material = {};
 
-    // Load textures
-    if (aiMat->GetTextureCount(aiTextureType_DIFFUSE) > 0)
-    {
-        aiString path;
-        aiMat->GetTexture(aiTextureType_DIFFUSE, 0, &path);
-        material.diffuse_texture =
-            loadTexture(path.C_Str(), directory, textures_loaded);
-    }
+  // Load textures
+  if (aiMat->GetTextureCount(aiTextureType_DIFFUSE) > 0) {
+    aiString path;
+    aiMat->GetTexture(aiTextureType_DIFFUSE, 0, &path);
+    material.diffuse_texture =
+        loadTexture(path.C_Str(), directory, textures_loaded);
+  }
 
-    if (aiMat->GetTextureCount(aiTextureType_SPECULAR) > 0)
-    {
-        aiString path;
-        aiMat->GetTexture(aiTextureType_SPECULAR, 0, &path);
-        material.specular_texture =
-            loadTexture(path.C_Str(), directory, textures_loaded);
-    }
+  if (aiMat->GetTextureCount(aiTextureType_SPECULAR) > 0) {
+    aiString path;
+    aiMat->GetTexture(aiTextureType_SPECULAR, 0, &path);
+    material.specular_texture =
+        loadTexture(path.C_Str(), directory, textures_loaded);
+  }
 
-    if (aiMat->GetTextureCount(aiTextureType_HEIGHT) > 0)
-    {
-        aiString path;
-        aiMat->GetTexture(aiTextureType_HEIGHT, 0, &path);
-        material.normal_texture =
-            loadTexture(path.C_Str(), directory, textures_loaded);
-    }
+  if (aiMat->GetTextureCount(aiTextureType_HEIGHT) > 0) {
+    aiString path;
+    aiMat->GetTexture(aiTextureType_HEIGHT, 0, &path);
+    material.normal_texture =
+        loadTexture(path.C_Str(), directory, textures_loaded);
+  }
 
-    // Extract material properties from Assimp
-    aiColor3D color;
+  // Extract material properties from Assimp
+  aiColor3D color;
 
-    // Diffuse color
-    if (aiMat->Get(AI_MATKEY_COLOR_DIFFUSE, color) == AI_SUCCESS)
-    {
-        material.diffuse_color = {color.r, color.g, color.b};
-    }
-    else
-    {
-        material.diffuse_color = {1.0f, 1.0f, 1.0f}; // Default white
-    }
+  // Diffuse color
+  if (aiMat->Get(AI_MATKEY_COLOR_DIFFUSE, color) == AI_SUCCESS) {
+    material.diffuse_color = {color.r, color.g, color.b};
+  } else {
+    material.diffuse_color = {1.0f, 1.0f, 1.0f}; // Default white
+  }
 
-    // Specular color
-    if (aiMat->Get(AI_MATKEY_COLOR_SPECULAR, color) == AI_SUCCESS)
-    {
-        material.specular_color = {color.r, color.g, color.b};
-    }
-    else
-    {
-        material.specular_color = {1.0f, 1.0f, 1.0f}; // Default white
-    }
+  // Specular color
+  if (aiMat->Get(AI_MATKEY_COLOR_SPECULAR, color) == AI_SUCCESS) {
+    material.specular_color = {color.r, color.g, color.b};
+  } else {
+    material.specular_color = {1.0f, 1.0f, 1.0f}; // Default white
+  }
 
-    // Shininess (this is the key one you asked about)
-    float shininess;
-    if (aiMat->Get(AI_MATKEY_SHININESS, shininess) == AI_SUCCESS)
-    {
-        material.shininess = shininess;
-    }
-    else
-    {
-        material.shininess = 32.0f; // Default reasonable value
-    }
+  // Shininess (this is the key one you asked about)
+  float shininess;
+  if (aiMat->Get(AI_MATKEY_SHININESS, shininess) == AI_SUCCESS) {
+    material.shininess = shininess;
+  } else {
+    material.shininess = 32.0f; // Default reasonable value
+  }
 
-    // Optional: Other properties if you want them
-    float opacity;
-    if (aiMat->Get(AI_MATKEY_OPACITY, opacity) == AI_SUCCESS)
-    {
-        material.alpha = opacity;
-    }
-    else
-    {
-        material.alpha = 1.0f;
-    }
+  // Optional: Other properties if you want them
+  float opacity;
+  if (aiMat->Get(AI_MATKEY_OPACITY, opacity) == AI_SUCCESS) {
+    material.alpha = opacity;
+  } else {
+    material.alpha = 1.0f;
+  }
 
-    // Roughness/metallic aren't standard in older formats,
-    // but some exporters put them in custom properties
-    float roughness;
-    if (aiMat->Get(AI_MATKEY_ROUGHNESS_FACTOR, roughness) == AI_SUCCESS)
-    {
-        material.roughness = roughness;
-    }
-    else
-    {
-        // Convert shininess to roughness approximation
-        material.roughness = sqrt(2.0f / (shininess + 2.0f));
-    }
+  // Roughness/metallic aren't standard in older formats,
+  // but some exporters put them in custom properties
+  float roughness;
+  if (aiMat->Get(AI_MATKEY_ROUGHNESS_FACTOR, roughness) == AI_SUCCESS) {
+    material.roughness = roughness;
+  } else {
+    // Convert shininess to roughness approximation
+    material.roughness = sqrt(2.0f / (shininess + 2.0f));
+  }
 
-    float metallic;
-    if (aiMat->Get(AI_MATKEY_METALLIC_FACTOR, metallic) == AI_SUCCESS)
-    {
-        material.metallic = metallic;
-    }
-    else
-    {
-        material.metallic = 0.0f; // Default non-metallic
-    }
+  float metallic;
+  if (aiMat->Get(AI_MATKEY_METALLIC_FACTOR, metallic) == AI_SUCCESS) {
+    material.metallic = metallic;
+  } else {
+    material.metallic = 0.0f; // Default non-metallic
+  }
 
-    material.hasDiffuseTexture = (material.diffuse_texture != 0) ? 1 : 0;
-    material.hasSpecularTexture = (material.specular_texture != 0) ? 1 : 0;
-    material.hasNormalMap = (material.normal_texture != 0) ? 1 : 0;
+  material.hasDiffuseTexture = (material.diffuse_texture != 0) ? 1 : 0;
+  material.hasSpecularTexture = (material.specular_texture != 0) ? 1 : 0;
+  material.hasNormalMap = (material.normal_texture != 0) ? 1 : 0;
 
-    return material;
+  return material;
 }
 
 static Mesh processMesh(aiMesh *mesh, const aiScene *scene,
                         std::string &directory,
                         std::vector<Texture> &textures_loaded,
-                        std::vector<Material> &materials)
-{
-    std::vector<Vertex> vertices;
-    vertices.reserve(mesh->mNumVertices);
+                        std::vector<Material> &materials) {
+  std::vector<Vertex> vertices;
+  vertices.reserve(mesh->mNumVertices);
 
-    std::vector<unsigned int> indices;
+  std::vector<unsigned int> indices;
 
-    for (unsigned int i = 0; i < mesh->mNumVertices; i++)
-    {
-        Vertex vertex;
-        glm::vec3 vector;
+  for (unsigned int i = 0; i < mesh->mNumVertices; i++) {
+    Vertex vertex;
+    glm::vec3 vector;
 
-        vector.x = mesh->mVertices[i].x;
-        vector.y = mesh->mVertices[i].y;
-        vector.z = mesh->mVertices[i].z;
-        vertex.Position = vector;
+    vector.x = mesh->mVertices[i].x;
+    vector.y = mesh->mVertices[i].y;
+    vector.z = mesh->mVertices[i].z;
+    vertex.Position = vector;
 
-        if (mesh->HasNormals())
-        {
-            vector.x = mesh->mNormals[i].x;
-            vector.y = mesh->mNormals[i].y;
-            vector.z = mesh->mNormals[i].z;
-            vertex.Normal = vector;
-        }
-
-        if (mesh->mTextureCoords[0])
-        {
-            glm::vec2 vec;
-            vec.x = mesh->mTextureCoords[0][i].x;
-            vec.y = mesh->mTextureCoords[0][i].y;
-            vertex.TexCoords = vec;
-        }
-        else
-        {
-            vertex.TexCoords = glm::vec2(0.0f, 0.0f);
-        }
-
-        vertices.push_back(vertex);
+    if (mesh->HasNormals()) {
+      vector.x = mesh->mNormals[i].x;
+      vector.y = mesh->mNormals[i].y;
+      vector.z = mesh->mNormals[i].z;
+      vertex.Normal = vector;
     }
 
-    for (unsigned int i = 0; i < mesh->mNumFaces; i++)
-    {
-        aiFace face = mesh->mFaces[i];
-        for (unsigned int j = 0; j < face.mNumIndices; j++)
-            indices.push_back(face.mIndices[j]);
+    if (mesh->mTextureCoords[0]) {
+      glm::vec2 vec;
+      vec.x = mesh->mTextureCoords[0][i].x;
+      vec.y = mesh->mTextureCoords[0][i].y;
+      vertex.TexCoords = vec;
+    } else {
+      vertex.TexCoords = glm::vec2(0.0f, 0.0f);
     }
 
-    aiMaterial *aiMat = scene->mMaterials[mesh->mMaterialIndex];
-    Material material = processMaterial(aiMat, directory, textures_loaded);
+    vertices.push_back(vertex);
+  }
 
-    // Store material and get its index
-    materials.push_back(material);
-    uint32_t material_index = materials.size() - 1;
+  for (unsigned int i = 0; i < mesh->mNumFaces; i++) {
+    aiFace face = mesh->mFaces[i];
+    for (unsigned int j = 0; j < face.mNumIndices; j++)
+      indices.push_back(face.mIndices[j]);
+  }
 
-    Mesh m;
-    m.vertices = vertices;
-    m.indices = indices;
-    m.material_index = material_index;
-    return m;
+  Mesh m;
+  m.vertices = vertices;
+  m.indices = indices;
+  m.material_index = mesh->mMaterialIndex;
+  return m;
+}
+
+void static processMaterials(const aiScene *scene, Model *model,
+                             std::string &directory) {
+
+  std::vector<Texture> textures_loaded(scene->mNumTextures);
+  model->materials.reserve(scene->mNumMaterials);
+  for (int i = 0; i < scene->mNumMaterials; i++) {
+    aiMaterial *aiMat = scene->mMaterials[i];
+    model->materials.emplace_back(
+        processMaterial(aiMat, directory, textures_loaded));
+  }
 }
 
 static void
@@ -205,78 +177,73 @@ processNode(aiNode *node, const aiScene *scene, std::string &directory,
             std::vector<Material> &materials)
 
 {
-    for (unsigned int i = 0; i < node->mNumMeshes; i++)
-    {
-        aiMesh *mesh = scene->mMeshes[node->mMeshes[i]];
-        meshes.push_back(
-            processMesh(mesh, scene, directory, textures_loaded, materials));
-    }
+  for (unsigned int i = 0; i < node->mNumMeshes; i++) {
+    aiMesh *mesh = scene->mMeshes[node->mMeshes[i]];
+    meshes.push_back(
+        processMesh(mesh, scene, directory, textures_loaded, materials));
+  }
 
-    for (unsigned int i = 0; i < node->mNumChildren; i++)
-    {
-        processNode(node->mChildren[i], scene, directory, textures_loaded, meshes,
-                    materials);
-    }
+  for (unsigned int i = 0; i < node->mNumChildren; i++) {
+    processNode(node->mChildren[i], scene, directory, textures_loaded, meshes,
+                materials);
+  }
 }
 
-
-
 // Convert aiAABB to your AABB struct
-static AABB convertAiAABB(const aiAABB &aiAabb)
-{
-    AABB aabb;
-    aabb.min = glm::vec3(aiAabb.mMin.x, aiAabb.mMin.y, aiAabb.mMin.z);
-    aabb.max = glm::vec3(aiAabb.mMax.x, aiAabb.mMax.y, aiAabb.mMax.z);
-    return aabb;
+static AABB convertAiAABB(const aiAABB &aiAabb) {
+  AABB aabb;
+  aabb.min = glm::vec3(aiAabb.mMin.x, aiAabb.mMin.y, aiAabb.mMin.z);
+  aabb.max = glm::vec3(aiAabb.mMax.x, aiAabb.mMax.y, aiAabb.mMax.z);
+  return aabb;
 }
 
 // Calculate AABB from Assimp scene
-static AABB calculateModelAABBFromAssimp(Model*model, const aiScene *scene, bool subMeshBBs)
-{
-    AABB modelAABB;
+static AABB calculateModelAABBFromAssimp(Model *model, const aiScene *scene,
+                                         bool subMeshBBs) {
+  AABB modelAABB;
 
-    // Iterate through all meshes and combine their AABBs
-    for (unsigned int i = 0; i < scene->mNumMeshes; i++)
-    {
-        const aiMesh *mesh = scene->mMeshes[i];
-        AABB meshAABB = convertAiAABB(mesh->mAABB);
-        if (subMeshBBs)
-        {
-            model->aabbs.push_back(meshAABB);
-        }
-        modelAABB.expand(meshAABB);
+  // Iterate through all meshes and combine their AABBs
+  for (unsigned int i = 0; i < scene->mNumMeshes; i++) {
+    const aiMesh *mesh = scene->mMeshes[i];
+    AABB meshAABB = convertAiAABB(mesh->mAABB);
+    if (subMeshBBs) {
+      model->aabbs.push_back(meshAABB);
     }
+    modelAABB.expand(meshAABB);
+  }
 
-    return modelAABB;
+  return modelAABB;
 }
-Model load_model(std::string path, bool subMeshBBs)
-{
-    auto entity = ecs.create();
-    Assimp::Importer importer;
-    Model model;
+Model load_model(std::string path, bool subMeshBBs) {
+  auto entity = ecs.create();
+  Assimp::Importer importer;
+  Model model;
 
+  std::vector<Texture> textures_loaded;
+  std::string directory;
+  bool gammaCorrection;
 
-    std::vector<Texture> textures_loaded;
-    std::string directory;
-    bool gammaCorrection;
+  const aiScene *scene = importer.ReadFile(
+      path, aiProcess_Triangulate | aiProcess_GenSmoothNormals |
+                aiProcess_FlipUVs | aiProcess_CalcTangentSpace |
+                aiProcess_GenBoundingBoxes);
 
-    const aiScene *scene = importer.ReadFile(
-        path, aiProcess_Triangulate | aiProcess_GenSmoothNormals |
-                  aiProcess_FlipUVs | aiProcess_CalcTangentSpace | aiProcess_GenBoundingBoxes);
+  if (!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE ||
+      !scene->mRootNode) {
+    std::cout << "ERROR::ASSIMP:: " << importer.GetErrorString() << std::endl;
+    return model;
+  }
 
-    if (!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE ||
-        !scene->mRootNode)
-    {
-        std::cout << "ERROR::ASSIMP:: " << importer.GetErrorString() << std::endl;
-        return model;
-    }
+  directory = path.substr(0, path.find_last_of('/'));
 
-    directory = path.substr(0, path.find_last_of('/'));
+  processNode(scene->mRootNode, scene, directory, textures_loaded, model.meshes,
+              model.materials);
 
-    processNode(scene->mRootNode, scene, directory, textures_loaded, model.meshes,
-                model.materials);
+  model.aabb = calculateModelAABBFromAssimp(&model, scene, subMeshBBs);
+  processMaterials(scene,& model, directory);
 
-    model.aabb = calculateModelAABBFromAssimp(&model, scene, subMeshBBs);
+  // so we can render per texture;
+  std::sort(model.meshes.begin(), model.meshes.end());
 
-   return model;
+  return model;
 }

@@ -116,13 +116,17 @@ void drawModel(
     unsigned int instanceCount) { // if(visibleInstances.empty()) return;
 
   // Shader::use(shader); // should already be in use
+  int materialIndex = -1;
 
   for (size_t i = 0; i < model->meshes.size(); i++) {
 
     const Mesh &mesh = model->meshes[i];
-    Material &material = model->materials[mesh.material_index];
-    bindMaterial(material, shader);
-
+    if(materialIndex != mesh.material_index)
+    {
+        Material &material = model->materials[mesh.material_index];
+        bindMaterial(material, shader);
+        materialIndex =mesh.material_index;
+    }
     // Draw this mesh with all instances
     glBindVertexArray(mesh.VAO);
     glDrawElementsInstanced(GL_TRIANGLES,
