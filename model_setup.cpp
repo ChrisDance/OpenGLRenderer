@@ -2,15 +2,15 @@
 
 static void bindMaterial(Material &material, unsigned int shader) {
 
-  Shader::setVec3("diffuseColor", shader, material.diffuse_color);
-  Shader::setVec3("specularColor", shader, material.specular_color);
-  Shader::setFloat("roughness", shader, material.roughness);
-  Shader::setFloat("metallic", shader, material.metallic);
-  Shader::setFloat("alpha", shader, material.alpha);
-  Shader::setFloat("shininess", shader, material.shininess);
-  Shader::setInt("hasDiffuseTexture", shader, material.hasDiffuseTexture);
-  Shader::setInt("hasSpecularTexture", shader, material.hasSpecularTexture);
-  Shader::setInt("hasNormalMap", shader, material.hasNormalMap);
+  Shader::SetVec3("diffuseColor", shader, material.diffuse_color);
+  Shader::SetVec3("specularColor", shader, material.specular_color);
+  Shader::SetFloat("roughness", shader, material.roughness);
+  Shader::SetFloat("metallic", shader, material.metallic);
+  Shader::SetFloat("alpha", shader, material.alpha);
+  Shader::SetFloat("shininess", shader, material.shininess);
+  Shader::SetInt("hasDiffuseTexture", shader, material.hasDiffuseTexture);
+  Shader::SetInt("hasSpecularTexture", shader, material.hasSpecularTexture);
+  Shader::SetInt("hasNormalMap", shader, material.hasNormalMap);
 
   int textureUnit = 0;
 
@@ -18,7 +18,7 @@ static void bindMaterial(Material &material, unsigned int shader) {
   if (material.hasDiffuseTexture != 0) {
     glActiveTexture(GL_TEXTURE0 + textureUnit);
     glBindTexture(GL_TEXTURE_2D, material.diffuse_texture);
-    Shader::setInt("material_diffuse", shader, textureUnit);
+    Shader::SetInt("material_diffuse", shader, textureUnit);
     textureUnit++;
   }
 
@@ -26,7 +26,7 @@ static void bindMaterial(Material &material, unsigned int shader) {
   if (material.specular_texture != 0) {
     glActiveTexture(GL_TEXTURE0 + textureUnit);
     glBindTexture(GL_TEXTURE_2D, material.specular_texture);
-    Shader::setInt("material_specular", shader, textureUnit);
+    Shader::SetInt("material_specular", shader, textureUnit);
     textureUnit++;
   }
 
@@ -34,7 +34,7 @@ static void bindMaterial(Material &material, unsigned int shader) {
   if (material.normal_texture != 0) {
     glActiveTexture(GL_TEXTURE0 + textureUnit);
     glBindTexture(GL_TEXTURE_2D, material.normal_texture);
-    Shader::setInt("material_normalMap", shader, textureUnit);
+    Shader::SetInt("material_normalMap", shader, textureUnit);
     textureUnit++;
   }
 }

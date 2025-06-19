@@ -16,8 +16,14 @@
 #include <sstream>
 #include <string>
 #include <vector>
+#include <entt/entt.hpp>
 
 #define MAX_LIGHTS 32
+
+extern entt::registry ecs;
+extern entt::dispatcher bus;
+
+
 
 
 struct AABB {
@@ -91,6 +97,40 @@ struct AABB {
                min.y <= other.max.y && max.y >= other.min.y &&
                min.z <= other.max.z && max.z >= other.min.z;
     }
+
+
+    // Get scaled AABB with maximum side length of 1
+    AABB getUnitScaled() const {
+        glm::vec3 size = getSize();
+        float maxDimension = glm::max(glm::max(size.x, size.y), size.z);
+
+        if (maxDimension == 0.0f) {
+            // Handle degenerate case where AABB has no volume
+            return *this;
+        }
+
+        float scale = 1.0f / maxDimension;
+        glm::vec3 center = getCenter();
+        glm::vec3 scaledSize = size * scale;
+        glm::vec3 halfScaledSize = scaledSize * 0.5f;
+
+        return AABB(center - halfScaledSize, center + halfScaledSize);
+    }
+
+
+    glm::mat4 getScaleToLengthTransform(float targetLength) const {
+        glm::vec3 size = getSize();
+        float maxDimension = glm::max(glm::max(size.x, size.y), size.z);
+
+        if (maxDimension == 0.0f) {
+            // Handle degenerate case
+            return glm::mat4(1.0f); // Identity matrix
+        }
+
+        float scale = targetLength / maxDimension;
+        return glm::scale(glm::mat4(1.0f), glm::vec3(scale));
+    }
+
 };
 
 struct Vertex {
@@ -167,4 +207,12 @@ struct LightingData {
     int numPointLights;
     PointLight pointLights[MAX_LIGHTS];
     // Remove _pad arrays
+};
+
+
+/* storage */
+
+struct Meta
+{
+    glm::vec2 WindowDimensions;
 };

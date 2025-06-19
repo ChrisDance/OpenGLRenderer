@@ -1,8 +1,20 @@
 #include "shader.hpp"
 #include <map>
+#include <iostream>
+#include <fstream>
+#include <sstream>
+
 #define INVALID_UNIFORM_LOCATION 0xffffffff
 
-static void checkCompileErrors(unsigned int shader, std::string type)
+
+
+
+static std::map<ShaderID, unsigned int> LoadedShaders;
+
+
+
+
+static bool checkCompileErrors(ShaderID shader, std::string type)
 {
     int success;
     char infoLog[1024];
@@ -14,6 +26,7 @@ static void checkCompileErrors(unsigned int shader, std::string type)
             glGetShaderInfoLog(shader, 1024, NULL, infoLog);
             std::cout << "ERROR::SHADER_COMPILATION_ERROR of type: " << type << "\n"
                       << infoLog << std::endl;
+            return false;
         }
     }
     else
@@ -24,8 +37,12 @@ static void checkCompileErrors(unsigned int shader, std::string type)
             glGetProgramInfoLog(shader, 1024, NULL, infoLog);
             std::cout << "ERROR::PROGRAM_LINKING_ERROR of type: " << type << "\n"
                       << infoLog << std::endl;
+
+                      return false;
         }
     }
+
+    return true ;
 }
 
 static std::string readFile(const char *filePath)
@@ -56,51 +73,28 @@ static unsigned int compileShader(const char *source, GLenum type)
     checkCompileErrors(shader, type == GL_VERTEX_SHADER ? "VERTEX" : "FRAGMENT");
     return shader;
 }
-void Shader::use(unsigned int ID) { glUseProgram(ID); }
+void Shader::Use(unsigned int ID) { glUseProgram(ID); }
 
-void Shader::setBool(const std::string &name, unsigned int ID, bool value)
+void Shader::SetBool(const std::string &name, unsigned int ID, bool value)
 {
     glUniform1i(glGetUniformLocation(ID, name.c_str()), (int)value);
 }
-void Shader::setInt(const std::string &name, unsigned int ID, int value)
+void Shader::SetInt(const std::string &name, unsigned int ID, int value)
 {
     glUniform1i(glGetUniformLocation(ID, name.c_str()), value);
 }
-void Shader::setFloat(const std::string &name, unsigned int ID, float value)
+void Shader::SetFloat(const std::string &name, unsigned int ID, float value)
 {
     glUniform1f(glGetUniformLocation(ID, name.c_str()), value);
 }
-void Shader::setVec3(const std::string &name, unsigned int ID, const glm::vec3 &value)
+void Shader::SetVec3(const std::string &name, unsigned int ID, const glm::vec3 &value)
 {
     glUniform3fv(glGetUniformLocation(ID, name.c_str()), 1, &value[0]);
 }
-void Shader::setMat4(const std::string &name, unsigned int ID, const glm::mat4 &mat)
+void Shader::SetMat4(const std::string &name, unsigned int ID, const glm::mat4 &mat)
 {
     glUniformMatrix4fv(glGetUniformLocation(ID, name.c_str()), 1, GL_FALSE, &mat[0][0]);
 }
-
-void Shader::setUniformBuffer(const char* blockName, unsigned int ID, const void* data, ssize_t size, int bindingPoint) {
-    GLuint blockIndex = glGetUniformBlockIndex(ID, blockName);
-    if (blockIndex == GL_INVALID_INDEX) {
-        std::cerr << "Uniform block '" << blockName << "' not found" << std::endl;
-        return;
-    }
-
-    static std::map<int, GLuint> ubos;
-
-    if (ubos.find(bindingPoint) == ubos.end()) {
-        glGenBuffers(1, &ubos[bindingPoint]);
-        glBindBuffer(GL_UNIFORM_BUFFER, ubos[bindingPoint]);
-        glBufferData(GL_UNIFORM_BUFFER, size, nullptr, GL_DYNAMIC_DRAW);
-    }
-
-    GLuint ubo = ubos[bindingPoint];
-    glBindBuffer(GL_UNIFORM_BUFFER, ubo);
-    glBufferSubData(GL_UNIFORM_BUFFER, 0, size, data);  // Use SubData instead of Data
-    glUniformBlockBinding(ID, blockIndex, bindingPoint);
-    glBindBufferBase(GL_UNIFORM_BUFFER, bindingPoint, ubo);
-}
-
 
 GLint Shader::GetUniformLocation(unsigned int shader, const char *pUniformName)
 {
@@ -113,9 +107,14 @@ GLint Shader::GetUniformLocation(unsigned int shader, const char *pUniformName)
 
     return Location;
 }
-
-unsigned int Shader::create(const char *vPath, const char *fPath)
+unsigned int Shader::Get(unsigned int ID){
+    assert(LoadedShaders.find(ID) != LoadedShaders.end());
+    return LoadedShaders[ID];
+}
+unsigned int Shader::Create(ShaderID Id, const char *vPath, const char *fPath)
 {
+    assert(LoadedShaders.find(Id) == LoadedShaders.end());
+
     std::string vertexCode = readFile(vPath);
     std::string fragmentCode = readFile(fPath);
 
@@ -130,9 +129,16 @@ unsigned int Shader::create(const char *vPath, const char *fPath)
     glAttachShader(ID, vertex);
     glAttachShader(ID, fragment);
     glLinkProgram(ID);
-    checkCompileErrors(ID, "PROGRAM");
+    bool success = checkCompileErrors(ID, "PROGRAM");
+
 
     glDeleteShader(vertex);
     glDeleteShader(fragment);
+
+    if(!success) {
+        exit(1) ;
+    }
+
+    LoadedShaders[Id]  = ID;
     return ID;
 }

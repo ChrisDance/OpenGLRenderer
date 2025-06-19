@@ -245,10 +245,10 @@ static AABB calculateModelAABBFromAssimp(const aiScene *scene)
 
     return modelAABB;
 }
-Model load_model(std::string path)
+Model * load_model(std::string path)
 {
     Assimp::Importer importer;
-    Model model;
+    Model * model = new Model();
     std::vector<Texture> textures_loaded;
     std::string directory;
     bool gammaCorrection;
@@ -266,10 +266,10 @@ Model load_model(std::string path)
 
     directory = path.substr(0, path.find_last_of('/'));
 
-    processNode(scene->mRootNode, scene, directory, textures_loaded, model.meshes,
-                model.materials);
+    processNode(scene->mRootNode, scene, directory, textures_loaded, model->meshes,
+                model->materials);
 
-    model.aabb= calculateModelAABBFromAssimp(scene);
+    model->aabb= calculateModelAABBFromAssimp(scene);
 
     return model;
 }

@@ -20,69 +20,67 @@
 #include "particle_emitter.hpp"
 #include "hash_grid.hpp"
 #include <entt/entt.hpp>
-#define MAX_OBJECTS_IN_SCENE 10
+#include "game.hpp"
+// #define MAX_OBJECTS_IN_SCENE 10
 
 
-unsigned int particleShader;
-std::vector<std::unique_ptr<ParticleEmitter>> particleEmitters;
+// unsigned int particleShader;
+// std::vector<std::unique_ptr<ParticleEmitter>> particleEmitters;
 
-entt::registry reg;
 
 // Add this function before main()
-void setupParticleSystem() {
-    // Create particle shader
-    particleShader = Shader::create("particle_vertex.glsl", "particle_fragment.glsl");
+// void setupParticleSystem() {
+//     // Create particle shader
+//     particleShader = Shader::create("particle_vertex.glsl", "particle_fragment.glsl");
 
-    // Create some particle emitters with different effects
+//     // Create some particle emitters with different effects
 
-    // Fire emitter at origin
-    auto fireEmitter = std::make_unique<ParticleEmitter>(ParticlePresets::createFire());
-    fireEmitter->setPosition(glm::vec3(0.0f, 0.0f, 0.0f));
-    particleEmitters.push_back(std::move(fireEmitter));
+//     // Fire emitter at origin
+//     auto fireEmitter = std::make_unique<ParticleEmitter>(ParticlePresets::createFire());
+//     fireEmitter->setPosition(glm::vec3(0.0f, 0.0f, 0.0f));
+//     particleEmitters.push_back(std::move(fireEmitter));
 
-    // Smoke emitter slightly above fire
-    auto smokeEmitter = std::make_unique<ParticleEmitter>(ParticlePresets::createExplosion());
-    smokeEmitter->setPosition(glm::vec3(0.0f, 1.0f, 0.0f));
-    particleEmitters.push_back(std::move(smokeEmitter));
+//     // Smoke emitter slightly above fire
+//     auto smokeEmitter = std::make_unique<ParticleEmitter>(ParticlePresets::createExplosion());
+//     smokeEmitter->setPosition(glm::vec3(0.0f, 1.0f, 0.0f));
+//     particleEmitters.push_back(std::move(smokeEmitter));
 
-    // // Snow falling from above
-    auto snowEmitter = std::make_unique<ParticleEmitter>(ParticlePresets::createSnow());
-    particleEmitters.push_back(std::move(snowEmitter));
-}
-Camera camera(glm::vec3(0.0f, 0.0f, 10.0f));
+//     // // Snow falling from above
+//     auto snowEmitter = std::make_unique<ParticleEmitter>(ParticlePresets::createSnow());
+//     particleEmitters.push_back(std::move(snowEmitter));
+// }
+
 
 // Add this function to handle particle input (optional)
-void handleParticleInput(GLFWwindow *window) {
-    static bool spacePressed = false;
+// void handleParticleInput(GLFWwindow *window) {
+//     static bool spacePressed = false;
 
-    // Trigger explosion on spacebar
-    if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS && !spacePressed) {
-        auto explosionEmitter = std::make_unique<ParticleEmitter>(ParticlePresets::createExplosion());
-        explosionEmitter->setPosition(camera.Position + camera.Front * 2.0f);
-        particleEmitters.push_back(std::move(explosionEmitter));
-        spacePressed = true;
-    }
-    if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_RELEASE) {
-        spacePressed = false;
-    }
+//     // Trigger explosion on spacebar
+//     if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS && !spacePressed) {
+//         auto explosionEmitter = std::make_unique<ParticleEmitter>(ParticlePresets::createExplosion());
+//         explosionEmitter->setPosition(camera.Position + camera.Front * 2.0f);
+//         particleEmitters.push_back(std::move(explosionEmitter));
+//         spacePressed = true;
+//     }
+//     if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_RELEASE) {
+//         spacePressed = false;
+//     }
 
-    // Trigger sparks on 'F' key
-    static bool fPressed = false;
-    if (glfwGetKey(window, GLFW_KEY_F) == GLFW_PRESS && !fPressed) {
-        auto sparksEmitter = std::make_unique<ParticleEmitter>(ParticlePresets::createSparks());
-        sparksEmitter->setPosition(camera.Position + camera.Front * 3.0f);
-        particleEmitters.push_back(std::move(sparksEmitter));
-        fPressed = true;
-    }
-    if (glfwGetKey(window, GLFW_KEY_F) == GLFW_RELEASE) {
-        fPressed = false;
-    }
-}
+//     // Trigger sparks on 'F' key
+//     static bool fPressed = false;
+//     if (glfwGetKey(window, GLFW_KEY_F) == GLFW_PRESS && !fPressed) {
+//         auto sparksEmitter = std::make_unique<ParticleEmitter>(ParticlePresets::createSparks());
+//         sparksEmitter->setPosition(camera.Position + camera.Front * 3.0f);
+//         particleEmitters.push_back(std::move(sparksEmitter));
+//         fPressed = true;
+//     }
+//     if (glfwGetKey(window, GLFW_KEY_F) == GLFW_RELEASE) {
+//         fPressed = false;
+//     }
+// }
 
 void fps_counter_init();
 void fps_counter_update();
-
-// fps_counter.cpp
 
 
 #include <iostream>
@@ -90,9 +88,6 @@ void fps_counter_update();
 static double last_log_time = 0.0;
 static int frame_count = 0;
 static const double LOG_INTERVAL = 3.0; // seconds
-
-
-
 
 void fps_counter_init() {
     last_log_time = glfwGetTime();
@@ -115,11 +110,7 @@ void fps_counter_update() {
     }
 }
 
-struct Scene
-{
-    std::vector<PointLight> pointLights;
-    std::vector<Model> models;
-};
+
 
 // Global variables
 const unsigned int SCR_WIDTH = 1000;
@@ -141,45 +132,45 @@ void processInput(GLFWwindow *window);
 
 
 
-void add_instance(Model &m, glm::vec3 trans, float scale, glm::vec3 rot = glm::vec3(0))
-{
-    std::vector<glm::mat4> instances;
-    glm::mat4 model = glm::mat4(1.0f);
+// void add_instance(Model &m, glm::vec3 trans, float scale, glm::vec3 rot = glm::vec3(0))
+// {
+//     std::vector<glm::mat4> instances;
+//     glm::mat4 model = glm::mat4(1.0f);
 
-    model = glm::translate(model, trans);
-    model = glm::rotate(model, (float)M_PI, rot);
-    model = glm::scale(model, glm::vec3(scale));
+//     model = glm::translate(model, trans);
+//     model = glm::rotate(model, (float)M_PI, rot);
+//     model = glm::scale(model, glm::vec3(scale));
 
-    //
-    m.aabb = m.aabb.transform(model);
+//     //
+//     m.aabb = m.aabb.transform(model);
 
-    instances.push_back(model);
+//     instances.push_back(model);
 
-    uploadInstanceData(&m, instances);
-}
-void setupLighting(unsigned int shaderID) {
-    // Directional light
-    Shader::setVec3("directLight.Direction", shaderID, glm::vec3(-1.0f, 0.0f, -0.0f));
-    Shader::setVec3("directLight.Intensity", shaderID, glm::vec3(0.5f, 0.5f, 0.5f));
-    Shader::setVec3("directLight.Color", shaderID, glm::vec3(1.0f, 1.0f, 1.0f));
+//     uploadInstanceData(&m, instances);
+// }
+// void setupLighting(unsigned int shaderID) {
+//     // Directional light
+//     Shader::setVec3("directLight.Direction", shaderID, glm::vec3(-1.0f, 0.0f, -0.0f));
+//     Shader::setVec3("directLight.Intensity", shaderID, glm::vec3(0.5f, 0.5f, 0.5f));
+//     Shader::setVec3("directLight.Color", shaderID, glm::vec3(1.0f, 1.0f, 1.0f));
 
-    // Number of point lights
-    Shader::setInt("numPointLights", shaderID, 2);
+//     // Number of point lights
+//     Shader::setInt("numPointLights", shaderID, 2);
 
-    // Point light 0
-    Shader::setVec3("pointLights[0].position", shaderID, glm::vec3(2.0f, 1.0f, 3.0f));
-    Shader::setVec3("pointLights[0].color", shaderID, glm::vec3(1.0f, 0.5f, 0.3f));
-    Shader::setFloat("pointLights[0].constant", shaderID, 1.0f);
-    Shader::setFloat("pointLights[0].linear", shaderID, 0.09f);
-    Shader::setFloat("pointLights[0].quadratic", shaderID, 0.032f);
+//     // Point light 0
+//     Shader::setVec3("pointLights[0].position", shaderID, glm::vec3(2.0f, 1.0f, 3.0f));
+//     Shader::setVec3("pointLights[0].color", shaderID, glm::vec3(1.0f, 0.5f, 0.3f));
+//     Shader::setFloat("pointLights[0].constant", shaderID, 1.0f);
+//     Shader::setFloat("pointLights[0].linear", shaderID, 0.09f);
+//     Shader::setFloat("pointLights[0].quadratic", shaderID, 0.032f);
 
-    // Point light 1
-    Shader::setVec3("pointLights[1].position", shaderID, glm::vec3(-2.0f, 2.0f, -1.0f));
-    Shader::setVec3("pointLights[1].color", shaderID, glm::vec3(0.3f, 0.5f, 1.0f));
-    Shader::setFloat("pointLights[1].constant", shaderID, 1.0f);
-    Shader::setFloat("pointLights[1].linear", shaderID, 0.09f);
-    Shader::setFloat("pointLights[1].quadratic", shaderID, 0.032f);
-}
+//     // Point light 1
+//     Shader::setVec3("pointLights[1].position", shaderID, glm::vec3(-2.0f, 2.0f, -1.0f));
+//     Shader::setVec3("pointLights[1].color", shaderID, glm::vec3(0.3f, 0.5f, 1.0f));
+//     Shader::setFloat("pointLights[1].constant", shaderID, 1.0f);
+//     Shader::setFloat("pointLights[1].linear", shaderID, 0.09f);
+//     Shader::setFloat("pointLights[1].quadratic", shaderID, 0.032f);
+// }
 // inline float distanceToPlane(const glm::vec4& plane, const glm::vec3& point) {
 //     return glm::dot(glm::vec3(plane), point) + plane.w;
 // }
@@ -220,6 +211,7 @@ int main()
 
     // Create window
     GLFWwindow *window = glfwCreateWindow(SCR_WIDTH, SCR_HEIGHT, "3D OpenGL Renderer", NULL, NULL);
+    entt::locator<Meta>::emplace(glm::vec2(SCR_WIDTH, SCR_HEIGHT));
     if (window == NULL)
     {
         std::cout << "Failed to create GLFW window" << std::endl;
@@ -244,28 +236,31 @@ int main()
 
     // Configure global OpenGL state
     glEnable(GL_DEPTH_TEST);
-
     glEnable(GL_BLEND);  // Add this for particle transparency
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);  // Standard alpha blending
 
-    auto ID = Shader::create("vertex.glsl", "fragment.glsl");
 
-    Model ourModel = load_model("ford/scene.gltf");
+    // auto ID = Shader::create("vertex.glsl", "fragment.glsl");
 
-    SpatialHashGrid spatialGrid(15.0f); // 15-unit cells
+    // Model ourModel = load_model("ford/scene.gltf");
 
-    // Add objects (you'd do this as you load models)
+    // SpatialHashGrid spatialGrid(15.0f); // 15-unit cells
+
+    // // Add objects (you'd do this as you load models)
 
 
+    Camera camera(glm::vec3(0.0f, 0.0f, 10.0f));
+    entt::locator<Camera>::emplace(camera);
 
-    setupModel(&ourModel, 10);
-    add_instance(ourModel, glm::vec3(0), 0.01f, glm::vec3(0, 0, 1));
+    // setupModel(&ourModel, 10);
+    // add_instance(ourModel, glm::vec3(0), 0.01f, glm::vec3(0, 0, 1));
 
-    Shader::use(ID);
-    setupLighting(ID);
-       setupParticleSystem();
-    // ParticleEmitter emitter = ParticleEmitter(ParticlePresets::createFire());
-    spatialGrid.addObject(1, ourModel.aabb, &ourModel);
+    // Shader::use(ID);
+    // setupLighting(ID);
+    // setupParticleSystem();
+    // // ParticleEmitter emitter = ParticleEmitter(ParticlePresets::createFire());
+    // spatialGrid.addObject(1, ourModel.aabb, &ourModel);
+    game_init(window);
     fps_counter_init();
     // Render loop
     while (!glfwWindowShouldClose(window))
@@ -275,34 +270,35 @@ int main()
         lastFrame = currentFrame;
 
         processInput(window);
-          handleParticleInput(window);  // Add this line
+        // handleParticleInput(window);  // Add this line
 
         glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        game_update(deltaTime /* seconds */);
 
-        Shader::use(ID);
-        setupLighting(ID);
+        // Shader::use(ID);
+        // setupLighting(ID);
 
-        // View/projection transformations
-        glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
-        glm::mat4 view = camera.GetViewMatrix();
+        // // View/projection transformations
+        // glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
+        // glm::mat4 view = camera.GetViewMatrix();
 
-        Shader::setMat4("projection", ID, projection);
-        Shader::setMat4("view", ID, view);
-        Shader::setVec3("viewPos", ID, camera.Position);
+        // Shader::setMat4("projection", ID, projection);
+        // Shader::setMat4("view", ID, view);
+        // Shader::setVec3("viewPos", ID, camera.Position);
 
 
 
         // camera.CalculateFrustum(projection, view);
 
-        auto visibleObjects = spatialGrid.cullObjects(camera);
+        // auto visibleObjects = spatialGrid.cullObjects(camera);
 
-        // Render only visible objects
-        for (ObjectHandle handle : visibleObjects) {
-            const SpatialObject* obj = spatialGrid.getObject(handle);
-            Model* model = static_cast<Model*>(obj->userData);
-            drawModel(ID, model, 1);
-        }
+        // // Render only visible objects
+        // for (ObjectHandle handle : visibleObjects) {
+        //     const SpatialObject* obj = spatialGrid.getObject(handle);
+        //     Model* model = static_cast<Model*>(obj->userData);
+        //     drawModel(ID, model, 1);
+        // }
 
        // if(isAABBInFrustum(test, camera.ViewFrustum))
        // {
@@ -321,17 +317,17 @@ int main()
         //     std::cout << "NO " << std::endl;
         // }
 
-        for (auto it = particleEmitters.begin(); it != particleEmitters.end();) {
-                    (*it)->update(deltaTime);
+        // for (auto it = particleEmitters.begin(); it != particleEmitters.end();) {
+        //             (*it)->update(deltaTime);
 
-                    // Remove dead emitters (non-looping ones that have finished)
-                    if (!(*it)->isAlive()) {
-                        it = particleEmitters.erase(it);
-                    } else {
-                        (*it)->render(particleShader, view, projection);
-                        ++it;
-                    }
-                }
+        //             // Remove dead emitters (non-looping ones that have finished)
+        //             if (!(*it)->isAlive()) {
+        //                 it = particleEmitters.erase(it);
+        //             } else {
+        //                 (*it)->render(particleShader, view, projection);
+        //                 ++it;
+        //             }
+        //         }
 
 
 
@@ -349,6 +345,8 @@ int main()
 
 void processInput(GLFWwindow *window)
 {
+
+    Camera& camera = entt::locator<Camera>::value();
     if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
         glfwSetWindowShouldClose(window, true);
     if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
@@ -363,11 +361,14 @@ void processInput(GLFWwindow *window)
 
 void framebuffer_size_callback(GLFWwindow *window, int width, int height)
 {
+    entt::locator<Meta>::emplace(glm::vec2(width, height));
     glViewport(0, 0, width, height);
 }
 
 void mouse_callback(GLFWwindow *window, double xposIn, double yposIn)
 {
+
+    Camera& camera = entt::locator<Camera>::value();
     float xpos = static_cast<float>(xposIn);
     float ypos = static_cast<float>(yposIn);
 
@@ -389,5 +390,7 @@ void mouse_callback(GLFWwindow *window, double xposIn, double yposIn)
 
 void scroll_callback(GLFWwindow *window, double xoffset, double yoffset)
 {
+
+    Camera& camera = entt::locator<Camera>::value();
     camera.ProcessMouseScroll(static_cast<float>(yoffset));
 }
