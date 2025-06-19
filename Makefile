@@ -83,7 +83,9 @@ obj/debug_lib_%.o: lib/%.c | obj
 
 # Clean target
 clean:
-	rm -rf obj $(TARGET) $(TARGET_DEBUG)
+	find obj -name "*.o" ! -name "lib_glad.o" ! -name "lib_stb_image.o" -delete 2>/dev/null || true
+	rm -rf $(TARGET) $(TARGET_DEBUG)
+
 
 # Rebuild target
 rebuild: clean all

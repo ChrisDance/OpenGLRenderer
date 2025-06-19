@@ -185,9 +185,7 @@ struct Model {
   std::vector<Material> materials;
   std::vector<AABB> aabbs;
   GLuint IVBO; /*instancing*/
-  AABB aabb;
-
-               // unsigned int maxInstances{0};
+  AABB aabb;        // unsigned int maxInstances{0};
 };
 struct PointLight {
     glm::vec3 position;

@@ -20,4 +20,4 @@
 
 
 
-Model * load_model(std::string path, bool subMeshBBs = false);
+Model load_model(std::string path, bool subMeshBBs = false);

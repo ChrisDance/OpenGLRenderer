@@ -7,13 +7,6 @@
 #define INVALID_UNIFORM_LOCATION 0xffffffff
 
 
-
-
-static std::map<ShaderID, unsigned int> LoadedShaders;
-
-
-
-
 static bool checkCompileErrors(ShaderID shader, std::string type)
 {
     int success;
@@ -107,14 +100,9 @@ GLint Shader::GetUniformLocation(unsigned int shader, const char *pUniformName)
 
     return Location;
 }
-unsigned int Shader::Get(unsigned int ID){
-    assert(LoadedShaders.find(ID) != LoadedShaders.end());
-    return LoadedShaders[ID];
-}
-unsigned int Shader::Create(ShaderID Id, const char *vPath, const char *fPath)
-{
-    assert(LoadedShaders.find(Id) == LoadedShaders.end());
 
+unsigned int Shader::Create(const char *vPath, const char *fPath)
+{
     std::string vertexCode = readFile(vPath);
     std::string fragmentCode = readFile(fPath);
 
@@ -139,6 +127,6 @@ unsigned int Shader::Create(ShaderID Id, const char *vPath, const char *fPath)
         exit(1) ;
     }
 
-    LoadedShaders[Id]  = ID;
+
     return ID;
 }

@@ -7,8 +7,8 @@
 
 namespace Shader
 {
-    unsigned int Create(ShaderID Id, const char *vPath, const char *fPath);
-    unsigned int Get(unsigned int ID);
+
+    unsigned int Create(const char *vPath, const char *fPath);
     void Use(unsigned int ID);
     void SetBool(const std::string &name, unsigned int ID, bool value);
     void SetInt(const std::string &name, unsigned int ID, int value);

@@ -249,10 +249,13 @@ static AABB calculateModelAABBFromAssimp(Model*model, const aiScene *scene, bool
 
     return modelAABB;
 }
-Model * load_model(std::string path, bool subMeshBBs)
+Model load_model(std::string path, bool subMeshBBs)
 {
+    auto entity = ecs.create();
     Assimp::Importer importer;
-    Model * model = new Model();
+    Model model;
+
+
     std::vector<Texture> textures_loaded;
     std::string directory;
     bool gammaCorrection;
@@ -270,10 +273,10 @@ Model * load_model(std::string path, bool subMeshBBs)
 
     directory = path.substr(0, path.find_last_of('/'));
 
-    processNode(scene->mRootNode, scene, directory, textures_loaded, model->meshes,
-                model->materials);
+    processNode(scene->mRootNode, scene, directory, textures_loaded, model.meshes,
+                model.materials);
 
-    model->aabb = calculateModelAABBFromAssimp(model, scene, subMeshBBs);
+    model.aabb = calculateModelAABBFromAssimp(&model, scene, subMeshBBs);
 
-    return model;
+   return model;
 }
