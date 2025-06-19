@@ -4,7 +4,7 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 #include "particle_emitter.hpp"
-#include "stb_image.h"
+#include "lib/stb_image.h"
 #include <assimp/Importer.hpp>
 #include <assimp/scene.h>
 #include <assimp/postprocess.h>
@@ -19,13 +19,14 @@
 #include "model_loader.hpp"
 #include "particle_emitter.hpp"
 #include "hash_grid.hpp"
+#include <entt/entt.hpp>
 #define MAX_OBJECTS_IN_SCENE 10
-
-
 
 
 unsigned int particleShader;
 std::vector<std::unique_ptr<ParticleEmitter>> particleEmitters;
+
+entt::registry reg;
 
 // Add this function before main()
 void setupParticleSystem() {
@@ -320,17 +321,17 @@ int main()
         //     std::cout << "NO " << std::endl;
         // }
 
-        // for (auto it = particleEmitters.begin(); it != particleEmitters.end();) {
-        //             (*it)->update(deltaTime);
+        for (auto it = particleEmitters.begin(); it != particleEmitters.end();) {
+                    (*it)->update(deltaTime);
 
-        //             // Remove dead emitters (non-looping ones that have finished)
-        //             if (!(*it)->isAlive()) {
-        //                 it = particleEmitters.erase(it);
-        //             } else {
-        //                 (*it)->render(particleShader, view, projection);
-        //                 ++it;
-        //             }
-        //         }
+                    // Remove dead emitters (non-looping ones that have finished)
+                    if (!(*it)->isAlive()) {
+                        it = particleEmitters.erase(it);
+                    } else {
+                        (*it)->render(particleShader, view, projection);
+                        ++it;
+                    }
+                }
 
 
 

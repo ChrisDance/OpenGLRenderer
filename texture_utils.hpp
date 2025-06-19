@@ -1,6 +1,6 @@
 #pragma once
 #include "mygl.h"
-#include "stb_image.h"
+#include "lib/stb_image.h"
 #include <iostream>
 #include <vector>
 #include <string>
