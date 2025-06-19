@@ -18,6 +18,7 @@
 #include <memory>
 #include "model_loader.hpp"
 #include "particle_emitter.hpp"
+#include "hash_grid.hpp"
 #define MAX_OBJECTS_IN_SCENE 10
 
 
@@ -120,8 +121,8 @@ struct Scene
 };
 
 // Global variables
-const unsigned int SCR_WIDTH = 1200;
-const unsigned int SCR_HEIGHT = 800;
+const unsigned int SCR_WIDTH = 1000;
+const unsigned int SCR_HEIGHT = 600;
 
 
 float lastX = SCR_WIDTH / 2.0f;
@@ -178,31 +179,31 @@ void setupLighting(unsigned int shaderID) {
     Shader::setFloat("pointLights[1].linear", shaderID, 0.09f);
     Shader::setFloat("pointLights[1].quadratic", shaderID, 0.032f);
 }
-inline float distanceToPlane(const glm::vec4& plane, const glm::vec3& point) {
-    return glm::dot(glm::vec3(plane), point) + plane.w;
-}
+// inline float distanceToPlane(const glm::vec4& plane, const glm::vec3& point) {
+//     return glm::dot(glm::vec3(plane), point) + plane.w;
+// }
 
-inline bool isAABBOutsidePlane(const AABB& aabb, const glm::vec4& plane) {
-    // Get the vertex closest to the plane (negative vertex)
-    glm::vec3 negativeVertex;
-    negativeVertex.x = (plane.x < 0.0f) ? aabb.max.x : aabb.min.x;
-    negativeVertex.y = (plane.y < 0.0f) ? aabb.max.y : aabb.min.y;
-    negativeVertex.z = (plane.z < 0.0f) ? aabb.max.z : aabb.min.z;
+// inline bool isAABBOutsidePlane(const AABB& aabb, const glm::vec4& plane) {
+//     // Get the vertex closest to the plane (negative vertex)
+//     glm::vec3 negativeVertex;
+//     negativeVertex.x = (plane.x < 0.0f) ? aabb.max.x : aabb.min.x;
+//     negativeVertex.y = (plane.y < 0.0f) ? aabb.max.y : aabb.min.y;
+//     negativeVertex.z = (plane.z < 0.0f) ? aabb.max.z : aabb.min.z;
 
-    // If the closest vertex is outside (negative distance), the entire AABB is outside
-    return distanceToPlane(plane, negativeVertex) < 0.0f;
-}
+//     // If the closest vertex is outside (negative distance), the entire AABB is outside
+//     return distanceToPlane(plane, negativeVertex) < 0.0f;
+// }
 
-// Test if AABB is within or intersects the frustum
-bool isAABBInFrustum(const AABB& aabb, const Frustum& frustum) {
-    // Test against all 6 frustum planes
-    for (int i = 0; i < 6; i++) {
-        if (isAABBOutsidePlane(aabb, frustum.planes[i])) {
-            return false; // AABB is completely outside this plane
-        }
-    }
-    return true; // AABB is inside or intersects the frustum
-}
+// // Test if AABB is within or intersects the frustum
+// bool isAABBInFrustum(const AABB& aabb, const Frustum& frustum) {
+//     // Test against all 6 frustum planes
+//     for (int i = 0; i < 6; i++) {
+//         if (isAABBOutsidePlane(aabb, frustum.planes[i])) {
+//             return false; // AABB is completely outside this plane
+//         }
+//     }
+//     return true; // AABB is inside or intersects the frustum
+// }
 
 int main()
 {
@@ -250,6 +251,12 @@ int main()
 
     Model ourModel = load_model("ford/scene.gltf");
 
+    SpatialHashGrid spatialGrid(15.0f); // 15-unit cells
+
+    // Add objects (you'd do this as you load models)
+
+
+
     setupModel(&ourModel, 10);
     add_instance(ourModel, glm::vec3(0), 0.01f, glm::vec3(0, 0, 1));
 
@@ -257,7 +264,7 @@ int main()
     setupLighting(ID);
        setupParticleSystem();
     // ParticleEmitter emitter = ParticleEmitter(ParticlePresets::createFire());
-
+    spatialGrid.addObject(1, ourModel.aabb, &ourModel);
     fps_counter_init();
     // Render loop
     while (!glfwWindowShouldClose(window))
@@ -285,7 +292,16 @@ int main()
 
 
 
-        camera.CalculateFrustum(projection, view);
+        // camera.CalculateFrustum(projection, view);
+
+        auto visibleObjects = spatialGrid.cullObjects(camera);
+
+        // Render only visible objects
+        for (ObjectHandle handle : visibleObjects) {
+            const SpatialObject* obj = spatialGrid.getObject(handle);
+            Model* model = static_cast<Model*>(obj->userData);
+            drawModel(ID, model, 1);
+        }
 
        // if(isAABBInFrustum(test, camera.ViewFrustum))
        // {
@@ -304,17 +320,17 @@ int main()
         //     std::cout << "NO " << std::endl;
         // }
 
-        for (auto it = particleEmitters.begin(); it != particleEmitters.end();) {
-                    (*it)->update(deltaTime);
+        // for (auto it = particleEmitters.begin(); it != particleEmitters.end();) {
+        //             (*it)->update(deltaTime);
 
-                    // Remove dead emitters (non-looping ones that have finished)
-                    if (!(*it)->isAlive()) {
-                        it = particleEmitters.erase(it);
-                    } else {
-                        (*it)->render(particleShader, view, projection);
-                        ++it;
-                    }
-                }
+        //             // Remove dead emitters (non-looping ones that have finished)
+        //             if (!(*it)->isAlive()) {
+        //                 it = particleEmitters.erase(it);
+        //             } else {
+        //                 (*it)->render(particleShader, view, projection);
+        //                 ++it;
+        //             }
+        //         }
 
 
 
