@@ -7,6 +7,7 @@
 #include "model_setup.hpp"
 #include "primitive_factory.hpp"
 #include "resource_ids.hpp"
+#include "skydome.hpp"
 #include "text_renderer.hpp"
 #include <fstream>
 #include <glm/glm.hpp>
@@ -33,7 +34,7 @@ struct ParsedEntity {
 };
 
 enum Dimension { X, Y, Z };
-enum Mode { TRANSLATION, ROTATION, META, AABB_TRANSLATE, AABB_ROTATE, AABB_SCALE };
+enum Mode { TRANSLATION, ROTATION, SCALE, META, AABB_TRANSLATE, AABB_ROTATE, AABB_SCALE };
 
 // === Global State ===
 static std::vector<entt::entity> static_entities;
@@ -240,7 +241,8 @@ static void handle_mode_toggle() {
     if (Input::is_key_just_pressed(GLFW_KEY_M)) {
         switch (current_mode) {
             case TRANSLATION: current_mode = ROTATION; break;
-            case ROTATION: current_mode = META; break;
+            case ROTATION: current_mode = SCALE; break;
+            case SCALE: current_mode = META; break;
             case META: current_mode = AABB_TRANSLATE; break;
             case AABB_TRANSLATE: current_mode = AABB_ROTATE; break;
             case AABB_ROTATE: current_mode = AABB_SCALE; break;
@@ -277,7 +279,7 @@ static void handle_transformations(float dt) {
 
     if (!i_pressed && !o_pressed) return;
 
-    if (current_mode == TRANSLATION || current_mode == ROTATION) {
+    if (current_mode == TRANSLATION || current_mode == ROTATION || current_mode == SCALE) {
         if (static_entities.empty()) return;
 
         Model& model = ecs.get<Model>(static_entities[selected_entity_index]);
@@ -310,6 +312,9 @@ static void handle_transformations(float dt) {
             transform[3] = glm::vec4(0, 0, 0, 1);
             transform = glm::rotate(glm::mat4(1.0f), angle, axis) * transform;
             transform[3] = glm::vec4(position, 1.0f);
+        }
+        else if(current_mode == SCALE) {
+           transform = glm::scale(transform, glm::vec3(i_pressed ? 1.1 : 0.9));
         }
 
         model.transform = transform;
@@ -414,6 +419,7 @@ static void render_ui() {
     switch (current_mode) {
         case TRANSLATION: mode_text += "Translation"; break;
         case ROTATION: mode_text += "Rotation"; break;
+        case SCALE: mode_text += "Scale"; break;
         case META: mode_text += "Meta"; break;
         case AABB_TRANSLATE: mode_text += "AABB Translate"; break;
         case AABB_ROTATE: mode_text += "AABB Rotate"; break;
@@ -482,7 +488,7 @@ static void render_ui() {
         }
     }
 }
-
+ SkyDome*sky;
 static void render_scene() {
     Camera& camera = entt::locator<Camera>::value();
     Meta& meta = entt::locator<Meta>::value();
@@ -498,24 +504,37 @@ static void render_scene() {
     // Render selected entity's AABB
     if (!static_entities.empty()) {
         const Model& model = ecs.get<Model>(static_entities[selected_entity_index]);
-        renderer->drawAABB(model.aabb.transform(model.transform), vp);
+        std::cout << model.aabbs.size() << '\n';
+        for(auto & aabb:model.aabbs) {
+            // renderer->drawAABB(aabb.transform(model.transform), vp);
+
+        }
+        // renderer->drawAABB(model.aabb.transform(model.transform), vp);
     }
+
+
 
     // Render all AABBs
     for (size_t i = 0; i < aabbs.size(); i++) {
         glm::vec3 color = (i == selected_aabb_index) ? glm::vec3(1, 0, 0) : glm::vec3(1, 1, 0);
         renderer->drawAABB2(aabbs[i].transform, vp, color);
     }
+
+
+
+
+    sky->render(view, projection);
 }
 
 // === Public Interface ===
 void static_system_init() {
+        sky = new SkyDome("skydom1.jpg");
     renderer = new AABBRenderer();
 
     // Load entities
     auto loaded_entities = load_entities("entities.txt");
     for (const auto& entity : loaded_entities) {
-        Model model = load_model(resources::path(static_cast<resources::AssetId>(entity.asset)));
+        Model model = load_model(resources::path(static_cast<resources::AssetId>(entity.asset)), true);
         model.transform = entity.transform;
         setupModel(&model, 1);
 

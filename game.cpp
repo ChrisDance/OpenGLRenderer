@@ -14,22 +14,7 @@
 #include <cmath>
 #include <entt/entt.hpp>
 #include <iostream>
-std::vector<glm::mat4> instances;
-Model model;
-
-// model = load_model(resources::path(resources::Models_gun));
-// auto t = model.aabb.getScaleToLengthTransform(1);
-// // model.aabb = model.aabb.transform(t);
-
-// instances.push_back(t);
-
-// auto ent1 = ecs.create();
-// ecs.emplace<Model>(ent1, model);
-// setupModel(&model, 1);
-// // render_system_init();
-
-// uploadInstanceData(&model, instances);
-//
+#include "skydome.hpp"
 
 
 
@@ -51,17 +36,20 @@ void game_init(GLFWwindow *window) {
   static_system_init();
   light_system_init();
 
-  // ground_system_init();
+
+  ground_system_init();
   collision_system_init();
+
 }
 
 void game_update(float dt) {
 
-  // ground_system_update(dt);
+  ground_system_update(dt);
 
   collision_system_update(dt);
   render_system_update();
   static_system_update(dt);
+
 
 
 
