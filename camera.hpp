@@ -34,7 +34,43 @@ public:
     float Zoom;
     Frustum ViewFrustum;
 
-    Camera(glm::vec3 position = glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3 up = glm::vec3(0.0f, 1.0f, 0.0f), float yaw = -90.0f, float pitch = 0.0f) : Front(glm::vec3(0.0f, 0.0f, -1.0f)), MovementSpeed(10.5f), MouseSensitivity(0.1f), Zoom(45.0f)
+    glm::vec3 GetGunPosition(float rightOffset = 0.3f, float upOffset = -0.2f, float forwardOffset = 0.5f) const
+    {
+        // Calculate gun position relative to camera
+        glm::vec3 gunPos = Position;
+
+        // Move right (positive = right side of screen)
+        gunPos += Right * rightOffset;
+
+        // Move up/down (negative = lower on screen)
+        gunPos += Up * upOffset;
+
+        // Move forward/back (positive = forward from camera)
+        gunPos += Front * forwardOffset;
+
+        return gunPos;
+    }
+
+    // Alternative: Get gun transform matrix for full positioning
+    glm::mat4 GetGunTransform(float rightOffset = 0.3f, float upOffset = -0.2f, float forwardOffset = 0.5f) const
+    {
+        glm::vec3 gunPos = GetGunPosition(rightOffset, upOffset, forwardOffset);
+
+        // Create transform matrix
+        glm::mat4 transform = glm::mat4(1.0f);
+
+        // Set position
+        transform[3] = glm::vec4(gunPos, 1.0f);
+
+        // Set orientation to match camera (you might want to add small rotations here)
+        transform[0] = glm::vec4(Right, 0.0f);
+        transform[1] = glm::vec4(Up, 0.0f);
+        transform[2] = glm::vec4(-Front, 0.0f); // Negative because OpenGL looks down -Z
+
+        return transform;
+    }
+
+    Camera(glm::vec3 position = glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3 up = glm::vec3(0.0f, 1.0f, 0.0f), float yaw = -90.0f, float pitch = 0.0f) : Front(glm::vec3(0.0f, 0.0f, -1.0f)), MovementSpeed(2.5f), MouseSensitivity(0.1f), Zoom(45.0f)
     {
         Position = position;
         WorldUp = up;
@@ -47,32 +83,32 @@ public:
     void CalculateFrustum(const glm::mat4& projection, const glm::mat4& view)
     {
         glm::mat4 clipMatrix = projection * view;
-    
+
         // Extract matrix elements (GLM is column-major)
         float m00 = clipMatrix[0][0], m01 = clipMatrix[1][0], m02 = clipMatrix[2][0], m03 = clipMatrix[3][0];
         float m10 = clipMatrix[0][1], m11 = clipMatrix[1][1], m12 = clipMatrix[2][1], m13 = clipMatrix[3][1];
         float m20 = clipMatrix[0][2], m21 = clipMatrix[1][2], m22 = clipMatrix[2][2], m23 = clipMatrix[3][2];
         float m30 = clipMatrix[0][3], m31 = clipMatrix[1][3], m32 = clipMatrix[2][3], m33 = clipMatrix[3][3];
-    
+
         // Extract frustum planes (normals point inward)
         // Left plane: w + x >= 0
         ViewFrustum.planes[Frustum::LEFT] = glm::vec4(m03 + m00, m13 + m10, m23 + m20, m33 + m30);
-    
-        // Right plane: w - x >= 0  
+
+        // Right plane: w - x >= 0
         ViewFrustum.planes[Frustum::RIGHT] = glm::vec4(m03 - m00, m13 - m10, m23 - m20, m33 - m30);
-    
+
         // Bottom plane: w + y >= 0
         ViewFrustum.planes[Frustum::BOTTOM] = glm::vec4(m03 + m01, m13 + m11, m23 + m21, m33 + m31);
-    
+
         // Top plane: w - y >= 0
         ViewFrustum.planes[Frustum::TOP] = glm::vec4(m03 - m01, m13 - m11, m23 - m21, m33 - m31);
-    
+
         // Near plane: w + z >= 0
         ViewFrustum.planes[Frustum::NEAR_PLANE] = glm::vec4(m03 + m02, m13 + m12, m23 + m22, m33 + m32);
-    
+
         // Far plane: w - z >= 0
         ViewFrustum.planes[Frustum::FAR_PLANE] = glm::vec4(m03 - m02, m13 - m12, m23 - m22, m33 - m32);
-    
+
         // Normalize all planes
         for (int i = 0; i < 6; i++) {
             float length = glm::length(glm::vec3(ViewFrustum.planes[i]));

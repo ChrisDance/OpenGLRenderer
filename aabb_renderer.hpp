@@ -151,6 +151,22 @@ public:
     glBindVertexArray(0);
   }
 
+  void drawAABB2(const glm::mat4 model, const glm::mat4 &viewProjectionMatrix,
+                const glm::vec3 &color = glm::vec3(1.0f, 1.0f, 0.0f)) {
+
+      glm::mat4 mvp = viewProjectionMatrix * model;
+
+    // Use shader program
+    glUseProgram(shaderProgram);
+    glUniformMatrix4fv(mvpLocation, 1, GL_FALSE, &mvp[0][0]);
+    glUniform3fv(colorLocation, 1, &color[0]);
+
+    // Draw wireframe
+    glBindVertexArray(VAO);
+    glDrawElements(GL_LINES, 24, GL_UNSIGNED_INT, 0);
+    glBindVertexArray(0);
+  }
+
   // Draw multiple AABBs with different colors
   void drawAABBs(const std::vector<std::pair<AABB, glm::vec3>> &aabbs,
                  const glm::mat4 &viewProjectionMatrix) {

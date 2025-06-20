@@ -1,5 +1,6 @@
 #include "light_system.hpp"
 #include "model.hpp"
+#include "shader.hpp"
 
 
 
@@ -7,6 +8,7 @@ uint _ShaderId;
 
 // TODO: will load from script
 static void setup_lights() {
+    Shader::Use(_ShaderId);
     uint shaderID = _ShaderId;
     // Directional light
     Shader::SetVec3("directLight.Direction", shaderID, glm::vec3(-1.0f, 0.0f, -0.0f));
@@ -31,7 +33,7 @@ static void setup_lights() {
     Shader::SetFloat("pointLights[1].quadratic", shaderID, 0.032f);
 }
 
-void light_system_init(uint shaderID) {
+void light_system_init() {
     _ShaderId = entt::locator<Shaders>::value().MAIN;
     setup_lights();
 }

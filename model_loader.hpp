@@ -8,7 +8,6 @@
 #include <assimp/Importer.hpp>
 #include <assimp/scene.h>
 #include <assimp/postprocess.h>
-#include "texture_utils.hpp"
 #include "shader.hpp"
 #include "model.hpp"
 #include <iostream>

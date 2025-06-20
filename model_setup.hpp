@@ -7,7 +7,6 @@
 #include <assimp/Importer.hpp>
 #include <assimp/scene.h>
 #include <assimp/postprocess.h>
-#include "texture_utils.hpp"
 #include "shader.hpp"
 #include "model.hpp"
 #include <iostream>
@@ -20,3 +19,4 @@
 void drawModel(unsigned int shader, Model *model, unsigned int instanceCount);
 void uploadInstanceData(Model *model, std::vector<glm::mat4> instances);
 void setupModel(Model *model, int maxInstances);
+void uploadData(Model*model, glm::mat4 transform);

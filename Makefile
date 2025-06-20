@@ -7,7 +7,8 @@ CFLAGS = -Wall -Wextra -O2
 CFLAGS_DEBUG = -Wall -Wextra -g -O0 -DDEBUG
 
 # Include directories
-INCLUDES = -I. -Ilib -I/opt/homebrew/include
+# INCLUDES = -I. -Ilib -I/opt/homebrew/include
+INCLUDES = -I. -Ilib -I/opt/homebrew/include -I/opt/homebrew/include/freetype2
 
 # Library directories and libraries
 LIBDIRS = -L/opt/homebrew/lib

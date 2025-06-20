@@ -5,9 +5,6 @@
 
 void render_system_init() {
 
-  for (auto [entity, model] : ecs.view<Model>().each()) {
-    setupModel(&model, 1);
-  }
 }
 void render_system_update() {
   Camera &camera = entt::locator<Camera>::value();
@@ -17,6 +14,8 @@ void render_system_update() {
   glm::mat4 projection = glm::perspective(
       glm::radians(camera.Zoom),
       meta.WindowDimensions.x / meta.WindowDimensions.y, 0.1f, 100.0f);
+  
+  
   glm::mat4 view = camera.GetViewMatrix();
 
   Shader::Use(shaders.MAIN);

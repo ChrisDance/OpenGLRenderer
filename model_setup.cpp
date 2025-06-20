@@ -1,4 +1,5 @@
 #include "model_setup.hpp"
+#include <vector>
 
 static void bindMaterial(Material &material, unsigned int shader) {
 
@@ -104,6 +105,17 @@ static void setupInstanceAttributes(Model *model, Mesh *mesh) {
 
 /* exposed */
 
+
+/* convience */
+glm::mat4 scratch[1];
+void uploadData(Model*model, glm::mat4 transform) {
+    scratch[0] = transform;
+    constexpr size_t dataSize = 1 * sizeof(glm::mat4);
+    glBindBuffer(GL_ARRAY_BUFFER, model->IVBO);
+    glBufferSubData(GL_ARRAY_BUFFER, 0, dataSize, scratch);
+}
+
+
 void uploadInstanceData(Model *model, std::vector<glm::mat4> instances) {
   size_t dataSize = instances.size() * sizeof(glm::mat4);
 
@@ -121,12 +133,12 @@ void drawModel(
   for (size_t i = 0; i < model->meshes.size(); i++) {
 
     const Mesh &mesh = model->meshes[i];
-    if(materialIndex != mesh.material_index)
-    {
+    // if(materialIndex != mesh.material_index)
+    // {
         Material &material = model->materials[mesh.material_index];
         bindMaterial(material, shader);
         materialIndex =mesh.material_index;
-    }
+    // }
     // Draw this mesh with all instances
     glBindVertexArray(mesh.VAO);
     glDrawElementsInstanced(GL_TRIANGLES,

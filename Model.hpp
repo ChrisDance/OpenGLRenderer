@@ -2,7 +2,7 @@
 #include "mygl.h"
 #include "shader.hpp"
 #include "lib/stb_image.h"
-#include "texture_utils.hpp"
+
 #include <assimp/Importer.hpp>
 #include <assimp/postprocess.h>
 #include <assimp/scene.h>
@@ -25,6 +25,10 @@
 extern entt::registry ecs;
 extern entt::dispatcher bus;
 
+
+struct tCollidables {
+    std::vector<glm::mat4> aabbs;
+};
 
 
 
@@ -119,6 +123,20 @@ struct AABB {
         return AABB(center - halfScaledSize, center + halfScaledSize);
     }
 
+    glm::mat4 getFromUnitCubeTransform() const {
+        glm::vec3 size = getSize();
+        glm::vec3 center = getCenter();
+
+        // Create scale matrix to resize from unit cube (1x1x1) to current size
+        glm::mat4 scaleMatrix = glm::scale(glm::mat4(1.0f), size);
+
+        // Create translation matrix to move from origin to center
+        glm::mat4 translateMatrix = glm::translate(glm::mat4(1.0f), center);
+
+        // Combine: first scale, then translate
+        return translateMatrix * scaleMatrix;
+    }
+
 
     glm::mat4 getScaleToLengthTransform(float targetLength) const {
         glm::vec3 size = getSize();
@@ -173,17 +191,23 @@ struct Material {
 };
 
 struct Mesh {
-
+    // for sorting
+bool operator<(const Mesh& other) const {
+      return material_index < other.material_index;
+}
   unsigned int material_index;
   std::vector<Vertex> vertices;
   std::vector<unsigned int> indices;
   GLuint VBO, EBO, VAO;
+  // isVisible?
+
 };
 
 struct Model {
   std::vector<Mesh> meshes;
   std::vector<Material> materials;
   std::vector<AABB> aabbs;
+  glm::mat4 transform;
   GLuint IVBO; /*instancing*/
   AABB aabb;        // unsigned int maxInstances{0};
 };
@@ -221,4 +245,5 @@ struct Meta
 
 struct Shaders {
     uint MAIN;
+    uint TEXT;
 };

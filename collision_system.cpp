@@ -1,5 +1,6 @@
 #include "collision_system.hpp"
 #include "camera.hpp"
+#include "model.hpp"
 
 glm::vec3 lastOkayPosition;
 void collision_system_init() {
@@ -7,12 +8,15 @@ void collision_system_init() {
   lastOkayPosition = cam.Position;
 }
 
-void collision_system_update(std::vector<AABB*> &boxes) {
+void collision_system_update(float dt) {
+
   Camera &cam = entt::locator<Camera>::value();
-  // glm::mat4 expander = glm::mat4(1);
-  // expander = glm::t
-  for (const auto &box : boxes) {
-    if (box->contains(cam.Position)) {
+  auto colliders = entt::locator<tCollidables>::value();
+  auto base = AABB(glm::vec3(-1, -1, -1), glm::vec3(1,1,1));
+
+  for (auto &box : colliders.aabbs) {
+    auto test = base.transform(box);
+    if (test.contains(cam.Position)) {
       cam.Position = lastOkayPosition;
       return;
     }

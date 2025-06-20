@@ -6,7 +6,7 @@
 
 
 void collision_system_init();
-void collision_system_update(std::vector<AABB*> &boxes);
+void collision_system_update(float dt);
 
 
 //
