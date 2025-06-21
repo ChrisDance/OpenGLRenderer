@@ -15,51 +15,61 @@
 #include <entt/entt.hpp>
 #include <iostream>
 #include "skydome.hpp"
+#include "animation_test.hpp"
 
 
-
+entt::entity e;
+AnimatedModel aModel;
 void game_init(GLFWwindow *window) {
-
-
+    // Model model = load_model("resources/models/buster_drone/scene.gltf");
+    // // model.aabb =
+    // setupModel(&model, 1);
+    // e = ecs.create() ;
+    // ecs.emplace<Model>(e, model);
+    // uploadData(&model, glm::mat4(1.0f));//model.aabb.getFromUnitCubeTransform());
     Shaders shaders;
   shaders.MAIN = Shader::Create(resources::path(resources::Shaders_vertex),
                                 resources::path(resources::Shaders_fragment));
 
-  shaders.TEXT= Shader::Create(resources::path(resources::Shaders_text_vertex),
-                                  resources::path(resources::Shaders_text_fragment));
+  // shaders.TEXT= Shader::Create(resources::path(resources::Shaders_text_vertex),
+  //                                 resources::path(resources::Shaders_text_fragment));
+
 
 
   entt::locator<Shaders>::emplace(shaders);
   auto win = entt::locator<Meta>::value().WindowDimensions;
 
-  text_init(shaders.TEXT, win.x, win.y);
-  static_system_init();
+
+
   light_system_init();
 
 
-  ground_system_init();
-  collision_system_init();
 
 }
 
 void game_update(float dt) {
 
-  ground_system_update(dt);
+  // ground_system_update(dt);
+  aModel.update(dt);
 
-  collision_system_update(dt);
+
+  // collision_system_update(dt);
   render_system_update();
-  static_system_update(dt);
+  auto camera = entt::locator<Camera>::value();
+  Meta& meta = entt::locator<Meta>::value();
+
+  glm::mat4 projection = glm::perspective(
+      glm::radians(camera.Zoom),
+      meta.WindowDimensions.x / meta.WindowDimensions.y,
+      0.1f, 100.0f
+  );
+  glm::mat4 view = camera.GetViewMatrix();
+  glm::mat4 vp = projection * view;
+
+  aModel.render(view, projection);
+  // static_system_update(dt);
 
 
 
 
 }
-
-// Camera&camera = entt::locator<Camera>::value();
-// instances[0] = camera.GetGunTransform(0.3, -0.3, 0.6);
-
-// instances[0] = glm::rotate(instances[0], (float)M_PI * 1.5f, glm::vec3(0, 1, 0));
-// instances[0] = glm::rotate(instances[0], (float)M_PI / 2, glm::vec3(-1, 0, 0));
-
-
-// uploadInstanceData(&model, instances);

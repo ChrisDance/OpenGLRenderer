@@ -13,9 +13,9 @@ void render_system_update() {
 
   glm::mat4 projection = glm::perspective(
       glm::radians(camera.Zoom),
-      meta.WindowDimensions.x / meta.WindowDimensions.y, 0.1f, 100.0f);
-  
-  
+      meta.WindowDimensions.x / meta.WindowDimensions.y, 0.1f, 1000.0f);
+
+
   glm::mat4 view = camera.GetViewMatrix();
 
   Shader::Use(shaders.MAIN);

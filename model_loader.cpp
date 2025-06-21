@@ -4,6 +4,25 @@
 
 
 
+void parse_single_bone(aiBone* bone) {
+    std::cout << bone->mNumWeights << '\n';
+}
+
+
+void parse_mesh_bones(aiMesh*mesh) {
+
+   for(int i = 0; i < mesh->mNumBones; i++)  {
+       parse_single_bone(mesh->mBones[i]);
+   }
+
+}
+
+
+
+
+
+/* bones */
+
 unsigned int TextureFromFile(const char *path, const std::string &directory, bool gamma = false)
 {
     std::string filename = std::string(path);
@@ -192,6 +211,10 @@ static Mesh processMesh(aiMesh *mesh, const aiScene *scene,
     aiFace face = mesh->mFaces[i];
     for (unsigned int j = 0; j < face.mNumIndices; j++)
       indices.push_back(face.mIndices[j]);
+  }
+
+  if(mesh->HasBones()) {
+
   }
 
   Mesh m;
